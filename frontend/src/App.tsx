@@ -11,6 +11,8 @@ interface Message {
 // 自动根据开发或生产环境决定 API 基准路径
 const API_BASE = import.meta.env.DEV
   ? 'http://localhost:8787'
+  : window.location.host.endsWith('pages.dev')
+  ? 'https://backend.benja956.workers.dev' // 临时兼容：在 Cloudflare 默认域名下预览时，直接指向您的 Worker 默认域名
   : `${window.location.protocol}//api.${window.location.host.replace(/^www\./, '')}`;
 
 function App() {
