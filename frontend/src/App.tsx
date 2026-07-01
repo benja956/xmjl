@@ -29,7 +29,7 @@ function App() {
       if (!res.ok) {
         throw new Error('无法加载留言列表');
       }
-      const data = await res.json<Message[]>();
+      const data = (await res.json()) as Message[];
       setMessages(data);
       setError(null);
     } catch (err: any) {
