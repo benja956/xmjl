@@ -202,6 +202,9 @@ function App() {
 
       <footer className="footer">
         <p>Antigravity Pair Programming Project</p>
+        <p style={{ opacity: 0.5, fontSize: '0.75rem', marginTop: '4px' }}>
+          Deploy SHA: c447468-debug | Current API Base: {API_BASE}
+        </p>
       </footer>
     </div>
   );
