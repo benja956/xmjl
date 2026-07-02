@@ -59,6 +59,22 @@ app.post('/api/login', async (c) => {
       return c.json({ error: '用户名和密码不能为空' }, 400);
     }
 
+    // 云端数据库自愈逻辑：若发现没有用户，则自动注入默认 admin 账号
+    try {
+      const countObj = (await c.env.DB.prepare(
+        'SELECT COUNT(*) as count FROM users'
+      ).first()) as { count: number } | null;
+      if (!countObj || countObj.count === 0) {
+        const adminHash = '240aa26b5936583137502e9f55d0822a4122d5457a24a20366b5b6e7534d7dff';
+        await c.env.DB.prepare('INSERT OR IGNORE INTO users (username, password) VALUES (?, ?)')
+          .bind('admin', adminHash)
+          .run();
+        console.log('数据库未检测到用户，已自动初始化默认管理员账户 admin');
+      }
+    } catch (dbErr) {
+      console.warn('检查或自动创建用户失败 (可能是迁移表还没就绪，将尝试继续验证):', dbErr);
+    }
+
     const hash = await sha256(password);
     const user = await c.env.DB.prepare(
       'SELECT * FROM users WHERE username = ? AND password = ?'
@@ -88,7 +104,8 @@ app.post('/api/login', async (c) => {
 
 // JWT 权限拦截中间件 (除登录接口外的所有 /api/* 请求)
 app.use('/api/*', (c, next) => {
-  if (c.req.path === '/api/login') {
+  // 更加鲁棒的放行匹配，兼容不同基础路径代理
+  if (c.req.path === '/api/login' || c.req.path.endsWith('/login') || c.req.method === 'OPTIONS') {
     return next();
   }
   return jwt({ secret: JWT_SECRET })(c, next);
