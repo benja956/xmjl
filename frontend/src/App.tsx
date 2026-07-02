@@ -680,7 +680,7 @@ function App() {
                       </div>
 
                       {/* 详细标签排版 */}
-                      <div className="row g-2 mt-3 pt-3 border-top text-muted small">
+                      <div className="row g-2 mt-3 pt-3 border-top text-muted small pb-3">
                         <div className="col-6 col-md-3">
                           <strong>职称 / 专业:</strong> {mgr.title || '无'} {mgr.title_major && `(${mgr.title_major})`}
                         </div>
@@ -691,67 +691,54 @@ function App() {
                           <strong>备注:</strong> {mgr.memo || '无'}
                         </div>
                       </div>
-                    </div>
 
-                    {/* 展平的业绩列表 */}
-                    <div className="card-footer bg-light border-0 px-4 py-3">
-                      <div className="d-flex justify-content-between align-items-center mb-3">
-                        <h6 className="mb-0 font-weight-bold text-secondary">
-                          <i className="bi bi-list-task me-1"></i> 工程业绩列表 ({myProjects.length})
-                        </h6>
-                        <button className="btn btn-xs btn-primary py-1 px-2.5 fs-7" onClick={() => openAddProject(mgr.name)}>
-                          <i className="bi bi-plus-circle me-1"></i> 新增业绩项目
-                        </button>
+                      {/* 包裹项目的 div 容器 */}
+                      <div className="mt-3 border-top pt-3">
+                        <div className="d-flex justify-content-between align-items-center mb-3">
+                          <h6 className="mb-0 font-weight-bold text-secondary">
+                            <i className="bi bi-journal-text me-1"></i> 工程业绩列表 ({myProjects.length})
+                          </h6>
+                          <button type="button" className="btn btn-xs btn-primary px-2.5" onClick={() => openAddProject(mgr.name)}>
+                            <i className="bi bi-plus-circle me-1"></i> 新增业绩
+                          </button>
+                        </div>
+
+                        {myProjects.length === 0 ? (
+                          <div className="text-muted small py-2">
+                            暂无工程业绩数据
+                          </div>
+                        ) : (
+                          <div className="d-flex flex-column gap-2">
+                            {myProjects.map((p) => {
+                              const isProjLocked = p.filing_status === '备案中' || p.duration.includes('在建') || p.duration.includes('至今');
+                              return (
+                                <div key={p.id} className="bg-light bg-opacity-50 rounded p-2.5 d-flex flex-wrap align-items-center justify-content-between gap-3 border border-light-subtle">
+                                  <div className="d-flex flex-wrap align-items-center gap-3 text-truncate">
+                                    <span className="font-weight-bold text-dark text-truncate" style={{ maxWidth: '300px' }} title={p.project_name}>
+                                      {p.project_name}
+                                    </span>
+                                    <span className="badge bg-primary bg-opacity-10 text-primary">{p.role}</span>
+                                    
+                                    {p.amount && <span className="text-muted small">金额: <strong className="text-primary-emphasis">{p.amount}</strong></span>}
+                                    {p.area && <span className="text-muted small">面积: <strong>{p.area}</strong></span>}
+                                    
+                                    <span className="text-muted small">({p.duration})</span>
+                                    
+                                    <span className={`badge ${isProjLocked ? 'bg-danger-subtle text-danger' : 'bg-success-subtle text-success'}`}>
+                                      {p.filing_status || '无'} {p.filing_end && `(至 ${p.filing_end})`}
+                                    </span>
+                                  </div>
+                                  
+                                  <div className="btn-group btn-group-xs flex-shrink-0">
+                                    <button type="button" className="btn btn-outline-secondary py-0.5 px-2" onClick={() => openEditProject(p)}>编辑</button>
+                                    <button type="button" className="btn btn-outline-danger py-0.5 px-2" onClick={() => handleDeleteProject(p.id)}>删除</button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
-
-                      {myProjects.length === 0 ? (
-                        <div className="text-center text-muted py-3 small bg-white rounded border border-light shadow-2xs">
-                          <p className="mb-0">该人员暂无添加任何工程业绩</p>
-                        </div>
-                      ) : (
-                        <div className="table-responsive bg-white rounded border border-light shadow-2xs">
-                          <table className="table table-hover table-striped mb-0 align-middle small">
-                            <thead className="table-light">
-                              <tr>
-                                <th>项目名称</th>
-                                <th>担任职务</th>
-                                <th>合同金额</th>
-                                <th>建筑面积</th>
-                                <th>开竣工时间</th>
-                                <th>四库平台</th>
-                                <th>备案状态</th>
-                                <th>操作</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {myProjects.map((p) => {
-                                const isProjLocked = p.filing_status === '备案中' || p.duration.includes('在建') || p.duration.includes('至今');
-                                return (
-                                  <tr key={p.id}>
-                                    <td className="font-weight-bold">{p.project_name}</td>
-                                    <td>{p.role}</td>
-                                    <td className="text-primary font-weight-bold">{p.amount}</td>
-                                    <td>{p.area}</td>
-                                    <td>{p.duration}</td>
-                                    <td>{p.record_status}</td>
-                                    <td>
-                                      <span className={`badge ${isProjLocked ? 'bg-danger-subtle text-danger' : 'bg-success-subtle text-success'}`}>
-                                        {p.filing_status || '无'} {p.filing_end && `(至 ${p.filing_end})`}
-                                      </span>
-                                    </td>
-                                    <td>
-                                      <div className="btn-group btn-group-xs">
-                                        <button type="button" className="btn btn-outline-secondary py-0.5 px-2" onClick={() => openEditProject(p)}>编辑</button>
-                                        <button type="button" className="btn btn-outline-danger py-0.5 px-2" onClick={() => handleDeleteProject(p.id)}>删除</button>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                );
-                              })}
-                            </tbody>
-                          </table>
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>
