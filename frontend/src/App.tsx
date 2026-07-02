@@ -65,8 +65,6 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-
-
   // ==========================================
   // 筛选器状态 (项目经理视图)
   // ==========================================
@@ -149,8 +147,6 @@ function App() {
   useEffect(() => {
     fetchAllData();
   }, []);
-
-
 
   // ==========================================
   // 增删改查请求处理
@@ -310,7 +306,6 @@ function App() {
 
   const checkProjectCompletedYear = (durationStr: string, limitYears: number): boolean => {
     if (!durationStr) return false;
-    // 提取开竣工时间中的竣工年份，例如 "2020.11.25—2022.11.10" -> 2022
     const years = durationStr.match(/\b(20\d{2})\b/g);
     if (years && years.length > 0) {
       const lastYear = parseInt(years[years.length - 1]);
@@ -324,25 +319,19 @@ function App() {
   // 前端过滤计算 (项目经理视图)
   // ==========================================
   const filteredManagers = managers.filter((mgr) => {
-    // 1. 姓名/关键字搜索
     if (mgrSearch && !mgr.name.includes(mgrSearch) && !mgr.memo.includes(mgrSearch)) {
       return false;
     }
-    // 2. 状态筛选
     if (mgrStatus !== 'all' && mgr.status !== mgrStatus) {
       return false;
     }
-    // 3. 证书专业筛选
     if (mgrCertMajor && !mgr.cert_major.includes(mgrCertMajor)) {
       return false;
     }
-    // 4. 安考证筛选
     if (mgrSafety !== 'all' && mgr.safety_cert !== mgrSafety) {
       return false;
     }
 
-    // 5. 跨表高级过滤：金额、面积和竣工年限
-    // 需要去查该项目经理在 `projects` 数组里关联的工程
     const myProjects = projects.filter((p) => p.manager_name === mgr.name);
 
     if (mgrMinAmount !== 'all') {
@@ -372,7 +361,6 @@ function App() {
   // 前端过滤计算 (项目视图)
   // ==========================================
   const filteredProjects = projects.filter((proj) => {
-    // 1. 项目名称或项目经理关键字搜索
     if (
       projSearch &&
       !proj.project_name.includes(projSearch) &&
@@ -380,29 +368,23 @@ function App() {
     ) {
       return false;
     }
-    // 2. 职位筛选
     if (projRole !== 'all' && proj.role !== projRole) {
       return false;
     }
-    // 3. 四库平台状态筛选
     if (projRecord !== 'all' && !proj.record_status.includes(projRecord)) {
       return false;
     }
-    // 4. 对应项目经理是否空闲筛选
     if (projMgrStatus !== 'all' && proj.manager_status !== projMgrStatus) {
       return false;
     }
-    // 5. 单笔合同金额过滤
     if (projMinAmount !== 'all') {
       const limit = parseFloat(projMinAmount);
       if (parseNum(proj.amount) < limit) return false;
     }
-    // 6. 单笔建筑面积过滤
     if (projMinArea !== 'all') {
       const limit = parseFloat(projMinArea);
       if (parseNum(proj.area) < limit) return false;
     }
-    // 7. 建设时间过滤 (在建 / 已竣工)
     if (projTimeStatus !== 'all') {
       const isOngoing = proj.duration.includes('在建') || proj.duration.includes('至今');
       if (projTimeStatus === '在建' && !isOngoing) return false;
@@ -646,104 +628,118 @@ function App() {
               {filteredManagers.map((mgr) => {
                 const myProjects = projects.filter((p) => p.manager_name === mgr.name);
                 return (
-                  <div key={mgr.id} className="col-12">
-                  <div className="card border-0 shadow-sm">
-                    <div className="card-body">
-                      <div className="d-flex flex-wrap align-items-center justify-content-between gap-3">
-                        <div className="d-flex align-items-center gap-3">
-                          <h4 className="card-title mb-0 font-weight-bold">{mgr.name}</h4>
-                          <span
-                            className={`badge px-2.5 py-1.5 fs-7 ${
-                              mgr.status === 'idle' ? 'bg-success bg-opacity-10 text-success' : 'bg-danger bg-opacity-10 text-danger'
-                            }`}
-                          >
-                            {mgr.status === 'idle' ? '🟢 空闲' : '🔴 锁定'}
-                          </span>
-                          {mgr.safety_cert && mgr.safety_cert !== '无' && (
-                            <span className="badge bg-secondary-subtle text-secondary-emphasis">
-                              安考 {mgr.safety_cert} 证
+                  <div key={mgr.id} className="col-12 mb-3">
+                    {/* 深蓝色大容器底色 */}
+                    <div className="rounded p-3 shadow-sm text-white" style={{ backgroundColor: '#1e4663' }}>
+                      <div className="row g-3 align-items-center">
+                        {/* 左侧属性方块区域 (占用 5 个栅格) */}
+                        <div className="col-12 col-lg-5">
+                          <div className="d-flex flex-wrap gap-2">
+                            {/* 姓名瓷贴 (粉紫) */}
+                            <div className="rounded p-2 px-3 text-center d-flex flex-column justify-content-center align-items-center shadow-2xs" 
+                                 style={{ backgroundColor: '#f5d0fe', color: '#701a75', minWidth: '100px', minHeight: '80px' }}>
+                              <span className="fs-5 font-weight-bold">{mgr.name}</span>
+                              <span className="fs-8 opacity-75">项目经理</span>
+                            </div>
+
+                            {/* 状态瓷贴 (绿/红) */}
+                            <div className="rounded p-2 px-3 text-center d-flex flex-column justify-content-center align-items-center shadow-2xs"
+                                 style={mgr.status === 'idle' 
+                                   ? { backgroundColor: '#d1fae5', color: '#065f46', minWidth: '90px', minHeight: '80px' } 
+                                   : { backgroundColor: '#fee2e2', color: '#991b1b', minWidth: '90px', minHeight: '80px' }}>
+                              <span className="fs-5 font-weight-bold">{mgr.status === 'idle' ? '空闲' : '锁定'}</span>
+                              <span className="fs-8 opacity-75">人员状态</span>
+                            </div>
+
+                            {/* 证书专业瓷贴 (粉红) */}
+                            {mgr.cert_major && (
+                              <div className="rounded p-2 px-3 text-center d-flex flex-column justify-content-center align-items-center shadow-2xs"
+                                   style={{ backgroundColor: '#fce7f3', color: '#831843', minWidth: '110px', minHeight: '80px', maxWidth: '180px' }}>
+                                <span className="fs-7 font-weight-bold text-truncate w-100">{mgr.cert_major}</span>
+                                <span className="fs-8 opacity-75 text-truncate w-100">{mgr.cert_name}</span>
+                              </div>
+                            )}
+
+                            {/* 安考证瓷贴 */}
+                            {mgr.safety_cert && mgr.safety_cert !== '无' && (
+                              <div className="rounded p-2 px-3 text-center d-flex flex-column justify-content-center align-items-center shadow-2xs"
+                                   style={{ backgroundColor: '#e0f2fe', color: '#0369a1', minWidth: '80px', minHeight: '80px' }}>
+                                <span className="fs-5 font-weight-bold">{mgr.safety_cert} 证</span>
+                                <span className="fs-8 opacity-75">安考证</span>
+                              </div>
+                            )}
+
+                            {/* 职称专业瓷贴 */}
+                            {mgr.title && (
+                              <div className="rounded p-2 px-3 text-center d-flex flex-column justify-content-center align-items-center shadow-2xs"
+                                   style={{ backgroundColor: '#fef3c7', color: '#78350f', minWidth: '100px', minHeight: '80px', maxWidth: '150px' }}>
+                                <span className="fs-7 font-weight-bold text-truncate w-100">{mgr.title_major || '未填'}</span>
+                                <span className="fs-8 opacity-75 text-truncate w-100">{mgr.title}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* 备注和编辑删除操作 */}
+                          <div className="mt-3 pt-2 border-top border-white border-opacity-10 d-flex align-items-center justify-content-between">
+                            <span className="fs-7 text-white-50 text-truncate me-2" title={mgr.memo}>
+                              <strong>备注:</strong> {mgr.memo || '无'}
                             </span>
+                            <div className="btn-group btn-group-xs flex-shrink-0">
+                              <button type="button" className="btn btn-outline-light py-0.5 px-2" onClick={() => openEditManager(mgr)}>编辑信息</button>
+                              <button type="button" className="btn btn-outline-danger py-0.5 px-2" onClick={() => handleDeleteManager(mgr.id, mgr.name)}>删除</button>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 右侧业绩明细条区域 (占用 7 个栅格) */}
+                        <div className="col-12 col-lg-7 border-start border-white border-opacity-10 ps-lg-4">
+                          <div className="d-flex justify-content-between align-items-center mb-2.5">
+                            <h6 className="mb-0 font-weight-bold text-white-50">
+                              <i className="bi bi-journal-text me-1"></i> 工程业绩代表 ({myProjects.length})
+                            </h6>
+                            <button type="button" className="btn btn-xs btn-light text-primary font-weight-bold" onClick={() => openAddProject(mgr.name)}>
+                              <i className="bi bi-plus-circle me-1"></i> 新增业绩
+                            </button>
+                          </div>
+
+                          {myProjects.length === 0 ? (
+                            <div className="p-3 text-center rounded text-white-50 small bg-black bg-opacity-20">
+                              暂无登记任何代表工程业绩
+                            </div>
+                          ) : (
+                            <div className="d-flex flex-column gap-2" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                              {myProjects.map((p) => {
+                                const isProjLocked = p.filing_status === '备案中' || p.duration.includes('在建') || p.duration.includes('至今');
+                                return (
+                                  <div key={p.id} className="rounded p-2 d-flex align-items-center justify-content-between gap-3 text-dark shadow-2xs"
+                                       style={{ backgroundColor: '#ffedd5', color: '#7c2d12', borderLeft: '4px solid #f97316' }}>
+                                    <div className="d-flex flex-wrap align-items-center gap-2.5 text-truncate small">
+                                      <span className="font-weight-bold text-truncate" style={{ maxWidth: '240px' }} title={p.project_name}>
+                                        {p.project_name}
+                                      </span>
+                                      <span className="badge text-white" style={{ backgroundColor: '#ea580c' }}>{p.role}</span>
+                                      {p.amount && <span className="opacity-90 font-weight-bold">{p.amount}</span>}
+                                      {p.area && <span className="opacity-75">{p.area}</span>}
+                                      <span className="opacity-75 fs-8">({p.duration})</span>
+                                      <span className={`badge ${isProjLocked ? 'bg-danger text-white' : 'bg-success text-white'}`}>
+                                        {p.filing_status || '无'}
+                                      </span>
+                                    </div>
+                                    <div className="btn-group btn-group-xs flex-shrink-0">
+                                      <button type="button" className="btn btn-outline-dark border-0 py-0.5 px-2 fs-8" onClick={() => openEditProject(p)}>改</button>
+                                      <button type="button" className="btn btn-outline-danger border-0 py-0.5 px-2 fs-8" onClick={() => handleDeleteProject(p.id)}>删</button>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
                           )}
                         </div>
-
-                        <div className="d-flex flex-wrap gap-2">
-                          <button className="btn btn-sm btn-outline-secondary" onClick={() => openEditManager(mgr)}>
-                            编辑基本信息
-                          </button>
-                          <button
-                            className="btn btn-sm btn-outline-danger"
-                            onClick={() => handleDeleteManager(mgr.id, mgr.name)}
-                          >
-                            删除
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* 详细标签排版 */}
-                      <div className="row g-2 mt-3 pt-3 border-top text-muted small pb-3">
-                        <div className="col-6 col-md-3">
-                          <strong>职称 / 专业:</strong> {mgr.title || '无'} {mgr.title_major && `(${mgr.title_major})`}
-                        </div>
-                        <div className="col-6 col-md-3">
-                          <strong>证书 / 注册专业:</strong> {mgr.cert_name} {mgr.cert_major && `(${mgr.cert_major})`}
-                        </div>
-                        <div className="col-12 col-md-6 text-md-end text-truncate">
-                          <strong>备注:</strong> {mgr.memo || '无'}
-                        </div>
-                      </div>
-
-                      {/* 包裹项目的 div 容器 */}
-                      <div className="mt-3 border-top pt-3">
-                        <div className="d-flex justify-content-between align-items-center mb-3">
-                          <h6 className="mb-0 font-weight-bold text-secondary">
-                            <i className="bi bi-journal-text me-1"></i> 工程业绩列表 ({myProjects.length})
-                          </h6>
-                          <button type="button" className="btn btn-xs btn-primary px-2.5" onClick={() => openAddProject(mgr.name)}>
-                            <i className="bi bi-plus-circle me-1"></i> 新增业绩
-                          </button>
-                        </div>
-
-                        {myProjects.length === 0 ? (
-                          <div className="text-muted small py-2">
-                            暂无工程业绩数据
-                          </div>
-                        ) : (
-                          <div className="d-flex flex-column gap-2">
-                            {myProjects.map((p) => {
-                              const isProjLocked = p.filing_status === '备案中' || p.duration.includes('在建') || p.duration.includes('至今');
-                              return (
-                                <div key={p.id} className="bg-light bg-opacity-50 rounded p-2.5 d-flex flex-wrap align-items-center justify-content-between gap-3 border border-light-subtle">
-                                  <div className="d-flex flex-wrap align-items-center gap-3 text-truncate">
-                                    <span className="font-weight-bold text-dark text-truncate" style={{ maxWidth: '300px' }} title={p.project_name}>
-                                      {p.project_name}
-                                    </span>
-                                    <span className="badge bg-primary bg-opacity-10 text-primary">{p.role}</span>
-                                    
-                                    {p.amount && <span className="text-muted small">金额: <strong className="text-primary-emphasis">{p.amount}</strong></span>}
-                                    {p.area && <span className="text-muted small">面积: <strong>{p.area}</strong></span>}
-                                    
-                                    <span className="text-muted small">({p.duration})</span>
-                                    
-                                    <span className={`badge ${isProjLocked ? 'bg-danger-subtle text-danger' : 'bg-success-subtle text-success'}`}>
-                                      {p.filing_status || '无'} {p.filing_end && `(至 ${p.filing_end})`}
-                                    </span>
-                                  </div>
-                                  
-                                  <div className="btn-group btn-group-xs flex-shrink-0">
-                                    <button type="button" className="btn btn-outline-secondary py-0.5 px-2" onClick={() => openEditProject(p)}>编辑</button>
-                                    <button type="button" className="btn btn-outline-danger py-0.5 px-2" onClick={() => handleDeleteProject(p.id)}>删除</button>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
                       </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
             </div>
           )}
         </div>
@@ -912,7 +908,7 @@ function App() {
             return (
               <>
                 <div className="text-secondary mb-3 small d-flex align-items-center justify-content-between">
-                  <span>找到 {groupedList.length} 个聚合工程项目 (共包含 {filteredProjects.length} 条岗位记录)</span>
+                  <span>找到 {groupedList.length} 个合并工程项目 (共包含 {filteredProjects.length} 条岗位记录)</span>
                   <button className="btn btn-sm btn-outline-primary" onClick={fetchAllData}>
                     <i className="bi bi-arrow-clockwise"></i> 刷新数据
                   </button>
@@ -925,70 +921,91 @@ function App() {
                 ) : (
                   <div className="row g-3">
                     {groupedList.map((gp, idx) => (
-                      <div key={idx} className="col-12">
-                        <div className="card border-0 shadow-sm">
-                          <div className="card-body">
-                            {/* 项目头部名称与基本指标 */}
-                            <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 border-bottom pb-3 mb-3">
-                              <div>
-                                <h4 className="card-title mb-1 font-weight-bold text-dark">{gp.project_name}</h4>
-                                <div className="d-flex flex-wrap gap-2 text-muted small mt-1">
-                                  <span className="badge bg-secondary-subtle text-secondary-emphasis">四库: {gp.record_status || '无'}</span>
-                                  {gp.filing_status && (
-                                    <span className={`badge ${gp.filing_status === '备案中' ? 'bg-danger-subtle text-danger' : 'bg-success-subtle text-success'}`}>
-                                      备案: {gp.filing_status} {gp.filing_end && `(至 ${gp.filing_end})`}
-                                    </span>
-                                  )}
+                      <div key={idx} className="col-12 mb-3">
+                        {/* 深蓝色大容器底色 */}
+                        <div className="rounded p-3 shadow-sm text-white" style={{ backgroundColor: '#1e4663' }}>
+                          <div className="row g-3 align-items-center">
+                            {/* 左侧属性方块区域 (占用 6 个栅格) */}
+                            <div className="col-12 col-lg-6">
+                              <div className="d-flex flex-wrap gap-2">
+                                {/* 项目名称瓷贴 (粉紫) */}
+                                <div className="rounded p-2 px-3 d-flex flex-column justify-content-center shadow-2xs" 
+                                     style={{ backgroundColor: '#f5d0fe', color: '#701a75', minWidth: '160px', minHeight: '80px', maxWidth: '300px' }}>
+                                  <span className="fs-6 font-weight-bold text-truncate-2" title={gp.project_name}>
+                                    {gp.project_name}
+                                  </span>
+                                  <span className="fs-8 opacity-75">工程项目</span>
                                 </div>
+
+                                {/* 金额瓷贴 (粉红) */}
+                                <div className="rounded p-2 px-3 text-center d-flex flex-column justify-content-center align-items-center shadow-2xs"
+                                     style={{ backgroundColor: '#fce7f3', color: '#831843', minWidth: '90px', minHeight: '80px' }}>
+                                  <span className="fs-6 font-weight-bold text-truncate w-100">{gp.amount || '—'}</span>
+                                  <span className="fs-8 opacity-75">合同金额</span>
+                                </div>
+
+                                {/* 面积瓷贴 (粉红) */}
+                                <div className="rounded p-2 px-3 text-center d-flex flex-column justify-content-center align-items-center shadow-2xs"
+                                     style={{ backgroundColor: '#fce7f3', color: '#831843', minWidth: '90px', minHeight: '80px' }}>
+                                  <span className="fs-6 font-weight-bold text-truncate w-100">{gp.area || '—'}</span>
+                                  <span className="fs-8 opacity-75">建筑面积</span>
+                                </div>
+
+                                {/* 四库备案瓷贴 */}
+                                <div className="rounded p-2 px-3 text-center d-flex flex-column justify-content-center align-items-center shadow-2xs"
+                                     style={{ backgroundColor: '#e0f2fe', color: '#0369a1', minWidth: '80px', minHeight: '80px' }}>
+                                  <span className="fs-7 font-weight-bold text-truncate w-100">{gp.record_status || '无'}</span>
+                                  <span className="fs-8 opacity-75">四库平台</span>
+                                </div>
+
+                                {/* 备案状态瓷贴 */}
+                                {gp.filing_status && (
+                                  <div className="rounded p-2 px-3 text-center d-flex flex-column justify-content-center align-items-center shadow-2xs"
+                                       style={gp.filing_status === '备案中' 
+                                         ? { backgroundColor: '#fee2e2', color: '#991b1b', minWidth: '90px', minHeight: '80px' } 
+                                         : { backgroundColor: '#d1fae5', color: '#065f46', minWidth: '90px', minHeight: '80px' }}>
+                                    <span className="fs-7 font-weight-bold">{gp.filing_status}</span>
+                                    <span className="fs-8 opacity-75">云端备案</span>
+                                  </div>
+                                )}
                               </div>
-                              
-                              {/* 规模指标看板 */}
-                              <div className="d-flex gap-4">
-                                <div className="text-md-end">
-                                  <span className="text-muted small d-block">合同金额</span>
-                                  <span className="text-primary font-weight-bold fs-5">{gp.amount || '—'}</span>
-                                </div>
-                                <div className="text-md-end border-start ps-4">
-                                  <span className="text-muted small d-block">建筑面积</span>
-                                  <span className="text-dark font-weight-bold fs-5">{gp.area || '—'}</span>
-                                </div>
+
+                              {/* 工期基本信息 */}
+                              <div className="mt-3 pt-2 border-top border-white border-opacity-10 text-white-50 small">
+                                <i className="bi bi-calendar3 me-1"></i> <strong>开竣工时间/工期:</strong> {gp.duration || '—'}
                               </div>
                             </div>
 
-                            {/* 项目工期等其他信息 */}
-                            <div className="text-muted small mb-3">
-                              <i className="bi bi-calendar3 me-1"></i> <strong>开竣工时间/工期:</strong> {gp.duration || '—'}
-                            </div>
+                            {/* 右侧参建人员明细条区域 (占用 6 个栅格) */}
+                            <div className="col-12 col-lg-6 border-start border-white border-opacity-10 ps-lg-4">
+                              <div className="d-flex justify-content-between align-items-center mb-2.5">
+                                <h6 className="mb-0 font-weight-bold text-white-50">
+                                  <i className="bi bi-people-fill me-1"></i> 本项目参建人员 ({gp.staffs.length})
+                                </h6>
+                              </div>
 
-                            {/* 项目关联人员气泡列表 */}
-                            <div className="bg-light rounded p-3">
-                              <h6 className="font-weight-bold text-secondary mb-2.5 small">
-                                <i className="bi bi-people me-1"></i> 本项目参建人员 ({gp.staffs.length})
-                              </h6>
-                              <div className="row g-2">
+                              <div className="d-flex flex-column gap-2" style={{ maxHeight: '200px', overflowY: 'auto' }}>
                                 {gp.staffs.map((staff) => (
-                                  <div key={staff.id} className="col-12 col-md-6 col-lg-4">
-                                    <div className="d-flex align-items-center justify-content-between bg-white border rounded p-2 shadow-2xs">
-                                      <div className="d-flex align-items-center text-truncate me-2">
-                                        <span className="badge bg-primary bg-opacity-10 text-primary me-2 flex-shrink-0">{staff.role}</span>
-                                        <strong className="text-dark me-2 text-truncate">{staff.manager_name}</strong>
-                                        <span className={`badge flex-shrink-0 ${staff.manager_status === 'idle' ? 'bg-success bg-opacity-10 text-success' : 'bg-danger bg-opacity-10 text-danger'}`}>
-                                          {staff.manager_status === 'idle' ? '空闲' : '锁定'}
-                                        </span>
-                                      </div>
-                                      <button
-                                        type="button"
-                                        className="btn btn-xs btn-outline-secondary flex-shrink-0"
-                                        onClick={() => openEditProject(staff.raw_project)}
-                                      >
-                                        修改
-                                      </button>
+                                  <div key={staff.id} className="rounded p-2 d-flex align-items-center justify-content-between gap-3 text-dark shadow-2xs"
+                                       style={{ backgroundColor: '#ffedd5', color: '#7c2d12', borderLeft: '4px solid #f97316' }}>
+                                    <div className="d-flex align-items-center text-truncate small gap-2">
+                                      <span className="badge text-white flex-shrink-0" style={{ backgroundColor: '#ea580c' }}>{staff.role}</span>
+                                      <strong className="text-dark text-truncate" style={{ maxWidth: '120px' }}>{staff.manager_name}</strong>
+                                      <span className={`badge flex-shrink-0 ${staff.manager_status === 'idle' ? 'bg-success text-white' : 'bg-danger text-white'}`}>
+                                        {staff.manager_status === 'idle' ? '空闲' : '锁定'}
+                                      </span>
                                     </div>
+                                    <button
+                                      type="button"
+                                      className="btn btn-outline-dark border-0 py-0.5 px-2 fs-8 flex-shrink-0"
+                                      onClick={() => openEditProject(staff.raw_project)}
+                                    >
+                                      修改
+                                    </button>
                                   </div>
                                 ))}
                               </div>
                             </div>
-
                           </div>
                         </div>
                       </div>
@@ -1243,7 +1260,7 @@ function App() {
       <footer className="text-center text-muted small py-4 border-top mt-5">
         <p className="mb-0">一建注册业绩大屏 &copy; 2026 Antigravity Pair Programming Project</p>
         <p className="mb-0 text-muted opacity-50 mt-1" style={{ fontSize: '0.75rem' }}>
-          Deploy SHA: c447468-debug | Current API Base: {API_BASE}
+          Deploy SHA: deaba5c-restruct | Current API Base: {API_BASE}
         </p>
       </footer>
     </div>
