@@ -880,61 +880,137 @@ function App() {
           </div>
 
           {/* 项目展示列表 */}
-          <div className="text-secondary mb-3 small d-flex align-items-center justify-content-between">
-            <span>找到 {filteredProjects.length} 项符合条件的工程业绩</span>
-            <button className="btn btn-sm btn-outline-primary" onClick={fetchAllData}>
-              <i className="bi bi-arrow-clockwise"></i> 刷新数据
-            </button>
-          </div>
+          {(() => {
+            const groupedMap: { [key: string]: {
+              project_name: string;
+              amount: string;
+              area: string;
+              duration: string;
+              record_status: string;
+              filing_status: string;
+              filing_end: string;
+              staffs: {
+                id: number;
+                manager_name: string;
+                role: string;
+                manager_status: 'idle' | 'locked';
+                raw_project: Project;
+              }[];
+            }} = {};
 
-          {filteredProjects.length === 0 ? (
-            <div className="card text-center p-5 border-0 bg-light shadow-sm">
-              <p className="lead mb-0 text-muted">🏗️ 暂无符合筛选条件的工程项目</p>
-            </div>
-          ) : (
-            <div className="table-responsive bg-white rounded shadow-sm border">
-              <table className="table table-hover table-striped mb-0 align-middle small">
-                <thead className="table-light">
-                  <tr>
-                    <th>工程项目名称</th>
-                    <th>负责人</th>
-                    <th>负责人状态</th>
-                    <th>担任职务</th>
-                    <th>合同金额</th>
-                    <th>建筑面积</th>
-                    <th>时间周期</th>
-                    <th>四库备案</th>
-                    <th>操作</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredProjects.map((p) => (
-                    <tr key={p.id}>
-                      <td className="font-weight-bold">{p.project_name}</td>
-                      <td>
-                        <span className="font-weight-bold text-dark">{p.manager_name}</span>
-                      </td>
-                      <td>
-                        <span className={`badge ${p.manager_status === 'idle' ? 'bg-success bg-opacity-10 text-success' : 'bg-danger bg-opacity-10 text-danger'}`}>
-                          {p.manager_status === 'idle' ? '🟢 负责人空闲 (业绩可用)' : '🔴 负责人已被锁'}
-                        </span>
-                      </td>
-                      <td>{p.role}</td>
-                      <td className="text-primary font-weight-bold">{p.amount}</td>
-                      <td>{p.area}</td>
-                      <td>{p.duration}</td>
-                      <td>{p.record_status}</td>
-                      <td>
-                        <button className="btn btn-xs btn-outline-secondary" onClick={() => openEditProject(p)}>
-                          修改
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+            filteredProjects.forEach((p) => {
+              if (!groupedMap[p.project_name]) {
+                groupedMap[p.project_name] = {
+                  project_name: p.project_name,
+                  amount: p.amount,
+                  area: p.area,
+                  duration: p.duration,
+                  record_status: p.record_status,
+                  filing_status: p.filing_status,
+                  filing_end: p.filing_end,
+                  staffs: [],
+                };
+              }
+              groupedMap[p.project_name].staffs.push({
+                id: p.id,
+                manager_name: p.manager_name,
+                role: p.role,
+                manager_status: p.manager_status,
+                raw_project: p,
+              });
+            });
+
+            const groupedList = Object.values(groupedMap);
+
+            return (
+              <>
+                <div className="text-secondary mb-3 small d-flex align-items-center justify-content-between">
+                  <span>找到 {groupedList.length} 个聚合工程项目 (共包含 {filteredProjects.length} 条岗位记录)</span>
+                  <button className="btn btn-sm btn-outline-primary" onClick={fetchAllData}>
+                    <i className="bi bi-arrow-clockwise"></i> 刷新数据
+                  </button>
+                </div>
+
+                {groupedList.length === 0 ? (
+                  <div className="card text-center p-5 border-0 bg-light shadow-sm">
+                    <p className="lead mb-0 text-muted">🏗️ 暂无符合筛选条件的工程项目</p>
+                  </div>
+                ) : (
+                  <div className="row g-3">
+                    {groupedList.map((gp, idx) => (
+                      <div key={idx} className="col-12">
+                        <div className="card border-0 shadow-sm">
+                          <div className="card-body">
+                            {/* 项目头部名称与基本指标 */}
+                            <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 border-bottom pb-3 mb-3">
+                              <div>
+                                <h4 className="card-title mb-1 font-weight-bold text-dark">{gp.project_name}</h4>
+                                <div className="d-flex flex-wrap gap-2 text-muted small mt-1">
+                                  <span className="badge bg-secondary-subtle text-secondary-emphasis">四库: {gp.record_status || '无'}</span>
+                                  {gp.filing_status && (
+                                    <span className={`badge ${gp.filing_status === '备案中' ? 'bg-danger-subtle text-danger' : 'bg-success-subtle text-success'}`}>
+                                      备案: {gp.filing_status} {gp.filing_end && `(至 ${gp.filing_end})`}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              {/* 规模指标看板 */}
+                              <div className="d-flex gap-4">
+                                <div className="text-md-end">
+                                  <span className="text-muted small d-block">合同金额</span>
+                                  <span className="text-primary font-weight-bold fs-5">{gp.amount || '—'}</span>
+                                </div>
+                                <div className="text-md-end border-start ps-4">
+                                  <span className="text-muted small d-block">建筑面积</span>
+                                  <span className="text-dark font-weight-bold fs-5">{gp.area || '—'}</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* 项目工期等其他信息 */}
+                            <div className="text-muted small mb-3">
+                              <i className="bi bi-calendar3 me-1"></i> <strong>开竣工时间/工期:</strong> {gp.duration || '—'}
+                            </div>
+
+                            {/* 项目关联人员气泡列表 */}
+                            <div className="bg-light rounded p-3">
+                              <h6 className="font-weight-bold text-secondary mb-2.5 small">
+                                <i className="bi bi-people me-1"></i> 本项目参建人员 ({gp.staffs.length})
+                              </h6>
+                              <div className="row g-2">
+                                {gp.staffs.map((staff) => (
+                                  <div key={staff.id} className="col-12 col-md-6 col-lg-4">
+                                    <div className="d-flex align-items-center justify-content-between bg-white border rounded p-2 shadow-2xs">
+                                      <div className="d-flex align-items-center text-truncate me-2">
+                                        <span className="badge bg-primary bg-opacity-10 text-primary me-2 flex-shrink-0">{staff.role}</span>
+                                        <strong className="text-dark me-2 text-truncate">{staff.manager_name}</strong>
+                                        <span className={`badge flex-shrink-0 ${staff.manager_status === 'idle' ? 'bg-success bg-opacity-10 text-success' : 'bg-danger bg-opacity-10 text-danger'}`}>
+                                          {staff.manager_status === 'idle' ? '空闲' : '锁定'}
+                                        </span>
+                                      </div>
+                                      <button
+                                        type="button"
+                                        className="btn btn-xs btn-outline-secondary flex-shrink-0"
+                                        onClick={() => openEditProject(staff.raw_project)}
+                                      >
+                                        修改
+                                      </button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            );
+          })()}
         </div>
       )}
 
