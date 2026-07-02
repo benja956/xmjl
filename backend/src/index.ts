@@ -169,7 +169,7 @@ app.use('/api/*', (c, next) => {
   if (c.req.path === '/api/login' || c.req.path.endsWith('/login') || c.req.method === 'OPTIONS') {
     return next();
   }
-  return jwt({ secret: JWT_SECRET })(c, next);
+  return jwt({ secret: JWT_SECRET, alg: 'HS256' })(c, next);
 });
 
 // ==========================================
