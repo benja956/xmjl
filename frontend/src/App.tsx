@@ -39,6 +39,15 @@ interface Stats {
   near_expiry: number;
 }
 
+interface AuditLog {
+  id: number;
+  user_name: string;
+  action: string;
+  target_id: number | null;
+  details: string;
+  created_at: string;
+}
+
 // 自动决定 API 路径
 const API_BASE = import.meta.env.DEV
   ? 'http://localhost:8787'
@@ -47,6 +56,18 @@ const API_BASE = import.meta.env.DEV
   : `${window.location.protocol}//api.${window.location.host.replace(/^www\./, '')}`;
 
 function App() {
+  // ==========================================
+  // 鉴权会话状态
+  // ==========================================
+  const [token, setToken] = useState<string | null>(localStorage.getItem('xmjl_jwt'));
+  const [username, setUsername] = useState<string | null>(localStorage.getItem('xmjl_username'));
+
+  // 登录表单状态
+  const [loginUser, setLoginUser] = useState('');
+  const [loginPass, setLoginPass] = useState('');
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [loggingIn, setLoggingIn] = useState(false);
+
   // 视图切换: 'manager' (项目经理视图) | 'project' (项目视图)
   const [activeTab, setActiveTab] = useState<'manager' | 'project'>('manager');
 
@@ -64,6 +85,13 @@ function App() {
   // 全局加载与错误状态
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // ==========================================
+  // 审计日志 Modal 状态
+  // ==========================================
+  const [showLogsModal, setShowLogsModal] = useState(false);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [loadingLogs, setLoadingLogs] = useState(false);
 
   // ==========================================
   // 筛选器状态 (项目经理视图)
@@ -119,21 +147,38 @@ function App() {
   });
 
   // ==========================================
+  // 统一的带 Token Header 的 Fetch 封装
+  // ==========================================
+  const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
+    const headers = new Headers(options.headers || {});
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`);
+    }
+    return fetch(url, { ...options, headers });
+  };
+
+  // ==========================================
   // 数据获取逻辑
   // ==========================================
   const fetchAllData = async () => {
+    if (!token) return; // 未登录时不请求敏感数据
+
     try {
       setLoading(true);
       // 1. 获取统计指标
-      const statsRes = await fetch(`${API_BASE}/api/stats`);
+      const statsRes = await fetchWithAuth(`${API_BASE}/api/stats`);
+      if (statsRes.status === 401) {
+        handleLogout();
+        return;
+      }
       if (statsRes.ok) setStats(await statsRes.json());
 
       // 2. 获取经理列表
-      const mgrRes = await fetch(`${API_BASE}/api/managers`);
+      const mgrRes = await fetchWithAuth(`${API_BASE}/api/managers`);
       if (mgrRes.ok) setManagers(await mgrRes.json());
 
       // 3. 获取所有项目列表
-      const projRes = await fetch(`${API_BASE}/api/projects`);
+      const projRes = await fetchWithAuth(`${API_BASE}/api/projects`);
       if (projRes.ok) setProjects(await projRes.json());
 
       setError(null);
@@ -145,8 +190,72 @@ function App() {
   };
 
   useEffect(() => {
-    fetchAllData();
-  }, []);
+    if (token) {
+      fetchAllData();
+    }
+  }, [token]);
+
+  // ==========================================
+  // 鉴权事件处理
+  // ==========================================
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!loginUser.trim() || !loginPass.trim()) return;
+
+    try {
+      setLoggingIn(true);
+      setLoginError(null);
+      const res = await fetch(`${API_BASE}/api/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: loginUser, password: loginPass }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || '登录失败，请核对账号密码');
+      }
+
+      // 保存鉴权会话
+      localStorage.setItem('xmjl_jwt', data.token);
+      localStorage.setItem('xmjl_username', data.username);
+      setToken(data.token);
+      setUsername(data.username);
+    } catch (err: any) {
+      setLoginError(err.message);
+    } finally {
+      setLoggingIn(false);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('xmjl_jwt');
+    localStorage.removeItem('xmjl_username');
+    setToken(null);
+    setUsername(null);
+    setManagers([]);
+    setProjects([]);
+  };
+
+  // 获取审计日志
+  const fetchAuditLogs = async () => {
+    try {
+      setLoadingLogs(true);
+      const res = await fetchWithAuth(`${API_BASE}/api/logs`);
+      if (res.ok) {
+        setAuditLogs(await res.json());
+      }
+    } catch (err) {
+      console.error('获取日志失败:', err);
+    } finally {
+      setLoadingLogs(false);
+    }
+  };
+
+  const openLogsModal = () => {
+    setShowLogsModal(true);
+    fetchAuditLogs();
+  };
 
   // ==========================================
   // 增删改查请求处理
@@ -162,7 +271,7 @@ function App() {
         : `${API_BASE}/api/managers`;
       const method = isEdit ? 'PUT' : 'POST';
 
-      const res = await fetch(url, {
+      const res = await fetchWithAuth(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(mgrForm),
@@ -180,7 +289,7 @@ function App() {
   const handleDeleteManager = async (id: number, name: string) => {
     if (!confirm(`确定要删除项目经理 "${name}" 吗？此操作将同步级联删除他名下的所有项目业绩！`)) return;
     try {
-      const res = await fetch(`${API_BASE}/api/managers/${id}`, { method: 'DELETE' });
+      const res = await fetchWithAuth(`${API_BASE}/api/managers/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('删除人员失败');
       await fetchAllData();
     } catch (err: any) {
@@ -203,7 +312,7 @@ function App() {
         ? projForm
         : { ...projForm, manager_name: targetManagerName };
 
-      const res = await fetch(url, {
+      const res = await fetchWithAuth(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(bodyData),
@@ -221,7 +330,7 @@ function App() {
   const handleDeleteProject = async (projId: number) => {
     if (!confirm('确定要删除这条业绩项目吗？')) return;
     try {
-      const res = await fetch(`${API_BASE}/api/projects/${projId}`, { method: 'DELETE' });
+      const res = await fetchWithAuth(`${API_BASE}/api/projects/${projId}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('删除项目失败');
       await fetchAllData();
     } catch (err: any) {
@@ -394,10 +503,78 @@ function App() {
     return true;
   });
 
+  // ==========================================
+  // 如果未登录，渲染全屏登录界面
+  // ==========================================
+  if (!token) {
+    return (
+      <div className="d-flex align-items-center justify-content-center bg-dark" style={{ minHeight: '100vh', background: 'radial-gradient(circle, #1e3a8a 0%, #0f172a 100%)' }}>
+        <div className="card border-0 shadow-lg p-4 text-white" style={{ maxWidth: '400px', width: '100%', backgroundColor: 'rgba(30, 41, 59, 0.7)', backdropFilter: 'blur(10px)', borderRadius: '1.2rem' }}>
+          <div className="text-center mb-4">
+            <div className="fs-1 text-info mb-2"><i className="bi bi-shield-lock-fill"></i></div>
+            <h3 className="font-weight-bold">台账系统登录</h3>
+            <p className="text-info small">请提供管理员凭据访问一建业绩大屏</p>
+          </div>
+          <form onSubmit={handleLogin}>
+            <div className="mb-3">
+              <label className="form-label small text-white-50">用户名</label>
+              <div className="input-group">
+                <span className="input-group-text bg-secondary border-0 text-white"><i className="bi bi-person"></i></span>
+                <input
+                  type="text"
+                  className="form-control bg-dark border-0 text-white"
+                  placeholder="请输入用户名"
+                  value={loginUser}
+                  onChange={(e) => setLoginUser(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+            <div className="mb-4">
+              <label className="form-label small text-white-50">密码</label>
+              <div className="input-group">
+                <span className="input-group-text bg-secondary border-0 text-white"><i className="bi bi-key"></i></span>
+                <input
+                  type="password"
+                  className="form-control bg-dark border-0 text-white"
+                  placeholder="请输入密码"
+                  value={loginPass}
+                  onChange={(e) => setLoginPass(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+            {loginError && (
+              <div className="alert alert-danger p-2 fs-7 mb-3 border-0 bg-danger bg-opacity-20 text-danger">
+                <i className="bi bi-exclamation-circle-fill me-1"></i> {loginError}
+              </div>
+            )}
+            <button type="submit" className="btn btn-info w-100 py-2.5 font-weight-bold text-white shadow" disabled={loggingIn}>
+              {loggingIn ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  正在验证授权...
+                </>
+              ) : (
+                '立即授权登录'
+              )}
+            </button>
+          </form>
+          <div className="text-center mt-4 text-white-50 small" style={{ fontSize: '0.7rem' }}>
+            默认管理员账号：admin | 密码：admin123
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ==========================================
+  // 已登录状态，渲染系统主界面
+  // ==========================================
   return (
     <div className="container py-4">
-      {/* 头部标题 */}
-      <header className="d-flex flex-wrap align-items-center justify-content-between pb-3 mb-4 border-bottom">
+      {/* 头部标题与用户信息 */}
+      <header className="d-flex flex-wrap align-items-center justify-content-between pb-3 mb-4 border-bottom gap-3">
         <div>
           <h1 className="h2 text-dark font-weight-bold">
             <i className="bi bi-buildings-fill text-primary me-2"></i>
@@ -407,9 +584,18 @@ function App() {
             基于 Cloudflare D1 + Bootstrap 5 实现的投标与备案状态多维分析看板
           </p>
         </div>
-        <button className="btn btn-primary d-flex align-items-center" onClick={openAddManager}>
-          <i className="bi bi-person-plus-fill me-1"></i> 新增项目经理
-        </button>
+        <div className="d-flex align-items-center gap-3 flex-wrap">
+          <span className="text-secondary small bg-body-tertiary p-2 px-3 rounded shadow-2xs border">
+            <i className="bi bi-person-circle text-primary me-1.5"></i>
+            当前用户: <strong>{username}</strong>
+          </span>
+          <button className="btn btn-primary d-flex align-items-center" onClick={openAddManager}>
+            <i className="bi bi-person-plus-fill me-1"></i> 新增项目经理
+          </button>
+          <button className="btn btn-outline-danger d-flex align-items-center" onClick={handleLogout}>
+            <i className="bi bi-box-arrow-right me-1"></i> 退出登录
+          </button>
+        </div>
       </header>
 
       {/* 顶部统计卡片指标 */}
@@ -454,7 +640,7 @@ function App() {
             </div>
           </div>
           <div className="col-6 col-md-3">
-            <div className="card h-100 border-0 shadow-sm bg-warning bg-opacity-10">
+            <div className="card h-100 border-0 shadow-sm bg-warning bg-opacity-10 border-start border-warning border-4">
               <div className="card-body d-flex align-items-center justify-content-between">
                 <div>
                   <h6 className="card-subtitle text-warning mb-1 text-uppercase small">累计业绩金额</h6>
@@ -1018,6 +1204,85 @@ function App() {
         </div>
       )}
 
+      {/* 底部系统操作审计日志按钮 */}
+      <footer className="text-center text-muted small py-4 border-top mt-5 d-flex flex-column align-items-center justify-content-center gap-2">
+        <button className="btn btn-sm btn-outline-secondary d-flex align-items-center" onClick={openLogsModal}>
+          <i className="bi bi-shield-shaded me-1.5 text-info"></i>
+          查看系统安全操作审计日志 (最近50条修改)
+        </button>
+        <p className="mb-0 mt-2">一建注册业绩大屏 &copy; 2026 Antigravity Pair Programming Project</p>
+        <p className="mb-0 text-muted opacity-50" style={{ fontSize: '0.7rem' }}>
+          Security Mode: JWT Authentication | API Target: {API_BASE}
+        </p>
+      </footer>
+
+      {/* ==========================================
+          MODAL 0: 查看审计日志
+          ========================================== */}
+      {showLogsModal && (
+        <div className="modal show d-block bg-dark bg-opacity-50" tabIndex={-1}>
+          <div className="modal-dialog modal-dialog-centered modal-lg">
+            <div className="modal-content">
+              <div className="modal-header bg-dark text-white">
+                <h5 className="modal-title font-weight-bold">
+                  <i className="bi bi-shield-lock-fill text-info me-2"></i>
+                  系统数据变更与安全审计日志
+                </h5>
+                <button type="button" className="btn-close btn-close-white" onClick={() => setShowLogsModal(false)}></button>
+              </div>
+              <div className="modal-body p-0">
+                {loadingLogs ? (
+                  <div className="text-center py-5">
+                    <div className="spinner-border text-info" role="status"></div>
+                    <p className="mt-2 text-muted">正在载入云端 D1 审计流水...</p>
+                  </div>
+                ) : auditLogs.length === 0 ? (
+                  <div className="text-center py-5 text-muted">
+                    <p className="mb-0">🛡️ 暂无任何人员或项目数据变更记录</p>
+                  </div>
+                ) : (
+                  <div className="table-responsive" style={{ maxHeight: '400px' }}>
+                    <table className="table table-hover table-striped mb-0 align-middle small">
+                      <thead className="table-dark">
+                        <tr>
+                          <th>操作时间</th>
+                          <th>操作账户</th>
+                          <th>审计事件</th>
+                          <th>具体细节描述</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {auditLogs.map((log) => (
+                          <tr key={log.id}>
+                            <td className="text-muted text-nowrap">{log.created_at}</td>
+                            <td>
+                              <span className="badge bg-secondary">{log.user_name}</span>
+                            </td>
+                            <td>
+                              <span className={`badge ${
+                                log.action.startsWith('ADD') ? 'bg-success' :
+                                log.action.startsWith('EDIT') ? 'bg-warning text-dark' :
+                                log.action.startsWith('DELETE') ? 'bg-danger' : 'bg-info'
+                              }`}>
+                                {log.action}
+                              </span>
+                            </td>
+                            <td className="font-weight-bold text-dark">{log.details}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+              <div className="modal-footer bg-light">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowLogsModal(false)}>关闭日志</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ==========================================
           MODAL 1: 新增/修改项目经理
           ========================================== */}
@@ -1255,14 +1520,6 @@ function App() {
           </div>
         </div>
       )}
-
-      {/* 页脚调试信息 */}
-      <footer className="text-center text-muted small py-4 border-top mt-5">
-        <p className="mb-0">一建注册业绩大屏 &copy; 2026 Antigravity Pair Programming Project</p>
-        <p className="mb-0 text-muted opacity-50 mt-1" style={{ fontSize: '0.75rem' }}>
-          Deploy SHA: deaba5c-restruct | Current API Base: {API_BASE}
-        </p>
-      </footer>
     </div>
   );
 }

@@ -1,24 +1,117 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import { jwt, sign } from 'hono/jwt';
 
 type Bindings = {
   DB: D1Database;
 };
 
 const app = new Hono<{ Bindings: Bindings }>();
+const JWT_SECRET = 'xmjl-super-secret-key-2026';
 
-// 启用 CORS，允许前端开发与生产环境跨域访问
+// 启用 CORS，允许前端开发与生产环境跨域访问（必须允许 Authorization 头部）
 app.use(
   '/api/*',
   cors({
     origin: '*',
-    allowHeaders: ['Content-Type'],
+    allowHeaders: ['Content-Type', 'Authorization'],
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   })
 );
 
+// SHA-256 密码哈希辅助函数 (无依赖标准实现)
+async function sha256(message: string): Promise<string> {
+  const msgBuffer = new TextEncoder().encode(message);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+// 审计日志写入辅助函数
+async function writeAuditLog(
+  db: D1Database,
+  userName: string,
+  action: string,
+  targetId: number | null,
+  details: string
+) {
+  try {
+    await db
+      .prepare(
+        'INSERT INTO audit_logs (user_name, action, target_id, details) VALUES (?, ?, ?, ?)'
+      )
+      .bind(userName, action, targetId, details)
+      .run();
+  } catch (err) {
+    console.error('写入审计日志失败:', err);
+  }
+}
+
 // ==========================================
-// 1. 项目经理接口 (Managers CRUD)
+// 1. 鉴权路由与中间件
+// ==========================================
+
+// 登录接口 (POST /api/login)
+app.post('/api/login', async (c) => {
+  try {
+    const { username, password } = await c.req.json();
+    if (!username || !password) {
+      return c.json({ error: '用户名和密码不能为空' }, 400);
+    }
+
+    const hash = await sha256(password);
+    const user = await c.env.DB.prepare(
+      'SELECT * FROM users WHERE username = ? AND password = ?'
+    )
+      .bind(username, hash)
+      .first();
+
+    if (!user) {
+      return c.json({ error: '用户名或密码错误' }, 401);
+    }
+
+    // 签发 JWT (有效期 24 小时)
+    const payload = {
+      username: user.username,
+      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24,
+    };
+    const token = await sign(payload, JWT_SECRET);
+
+    // 记录登录审计
+    await writeAuditLog(c.env.DB, user.username as string, 'USER_LOGIN', null, `用户 ${user.username} 成功登录系统`);
+
+    return c.json({ token, username: user.username });
+  } catch (err: any) {
+    return c.json({ error: err.message }, 500);
+  }
+});
+
+// JWT 权限拦截中间件 (除登录接口外的所有 /api/* 请求)
+app.use('/api/*', (c, next) => {
+  if (c.req.path === '/api/login') {
+    return next();
+  }
+  return jwt({ secret: JWT_SECRET })(c, next);
+});
+
+// ==========================================
+// 2. 审计日志查询接口
+// ==========================================
+
+// 获取系统最近 50 条审计日志
+app.get('/api/logs', async (c) => {
+  try {
+    const logs = await c.env.DB.prepare(
+      'SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT 50'
+    ).all();
+    return c.json(logs.results);
+  } catch (err: any) {
+    return c.json({ error: err.message }, 500);
+  }
+});
+
+// ==========================================
+// 3. 项目经理接口 (Managers CRUD)
 // ==========================================
 
 // 获取经理列表（支持筛选）
@@ -28,58 +121,52 @@ app.get('/api/managers', async (c) => {
     const cert_major = c.req.query('cert_major');
     const title = c.req.query('title');
     const safety_cert = c.req.query('safety_cert');
-    const status = c.req.query('status'); // 'idle' (空闲) | 'locked' (锁定)
 
     let sql = `
-      SELECT pm.*, 
-             (SELECT COUNT(*) FROM projects p WHERE p.manager_name = pm.name) as project_count,
-             (SELECT COUNT(*) FROM projects p WHERE p.manager_name = pm.name AND (p.filing_status = '备案中' OR p.duration LIKE '%在建%' OR p.duration LIKE '%至今%')) as locked_count
+      SELECT 
+        pm.*,
+        COUNT(p.id) as project_count,
+        SUM(CASE WHEN p.filing_status = '备案中' OR p.duration LIKE '%在建%' OR p.duration LIKE '%至今%' THEN 1 ELSE 0 END) as locked_count
       FROM project_managers pm
+      LEFT JOIN projects p ON pm.name = p.manager_name
     `;
-    
-    const conditions: string[] = [];
+
+    const whereConditions: string[] = [];
     const params: any[] = [];
 
     if (q) {
-      conditions.push('pm.name LIKE ?');
-      params.push(`%${q}%`);
+      whereConditions.push('(pm.name LIKE ? OR pm.memo LIKE ?)');
+      params.push(`%${q}%`, `%${q}%`);
     }
     if (cert_major) {
-      conditions.push('pm.cert_major LIKE ?');
+      whereConditions.push('pm.cert_major LIKE ?');
       params.push(`%${cert_major}%`);
     }
     if (title) {
-      conditions.push('pm.title = ?');
-      params.push(title);
+      whereConditions.push('pm.title LIKE ?');
+      params.push(`%${title}%`);
     }
-    if (safety_cert) {
-      conditions.push('pm.safety_cert = ?');
+    if (safety_cert && safety_cert !== 'all') {
+      whereConditions.push('pm.safety_cert = ?');
       params.push(safety_cert);
     }
 
-    if (conditions.length > 0) {
-      sql += ' WHERE ' + conditions.join(' AND ');
+    if (whereConditions.length > 0) {
+      sql += ' WHERE ' + whereConditions.join(' AND ');
     }
 
-    sql += ' ORDER BY pm.id DESC';
+    sql += ' GROUP BY pm.id ORDER BY pm.name ASC';
 
     const stmt = c.env.DB.prepare(sql).bind(...params);
     const { results } = await stmt.all();
 
-    // 内存过滤人员状态 (空闲/锁定)
-    let processed = results.map((row: any) => {
-      const isLocked = row.locked_count > 0;
-      return {
-        ...row,
-        status: isLocked ? 'locked' : 'idle',
-      };
-    });
+    // 映射状态：若 locked_count > 0，则该经理被锁定，否则空闲 (idle)
+    const formatted = results.map((row: any) => ({
+      ...row,
+      status: row.locked_count > 0 ? 'locked' : 'idle',
+    }));
 
-    if (status) {
-      processed = processed.filter((row: any) => row.status === status);
-    }
-
-    return c.json(processed);
+    return c.json(formatted);
   } catch (err: any) {
     return c.json({ error: err.message }, 500);
   }
@@ -88,26 +175,17 @@ app.get('/api/managers', async (c) => {
 // 新增项目经理
 app.post('/api/managers', async (c) => {
   try {
-    const body = await c.req.json<{
-      name: string;
-      title?: string;
-      title_major?: string;
-      cert_name?: string;
-      cert_major?: string;
-      safety_cert?: string;
-      memo?: string;
-    }>();
+    const body = await c.req.json();
+    if (!body.name) return c.json({ error: '姓名不能为空' }, 400);
 
-    if (!body.name) {
-      return c.json({ error: 'Name is required' }, 400);
-    }
+    const payload = c.get('jwtPayload') as { username: string };
+    const currentUser = payload.username;
 
     const result = await c.env.DB.prepare(
-      `INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`
+      'INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES (?, ?, ?, ?, ?, ?, ?)'
     )
       .bind(
-        body.name.trim(),
+        body.name,
         body.title || '',
         body.title_major || '',
         body.cert_name || '一级建造师',
@@ -117,47 +195,30 @@ app.post('/api/managers', async (c) => {
       )
       .run();
 
-    return c.json({ success: true, id: result.meta.last_row_id });
+    const newId = result.meta.last_row_id ? Number(result.meta.last_row_id) : null;
+    await writeAuditLog(c.env.DB, currentUser, 'ADD_MANAGER', newId, `新增项目经理: ${body.name}`);
+
+    return c.json({ success: true, id: newId });
   } catch (err: any) {
     return c.json({ error: err.message }, 500);
   }
 });
 
-// 编辑项目经理信息
+// 修改项目经理基本信息
 app.put('/api/managers/:id', async (c) => {
   try {
     const id = c.req.param('id');
-    const body = await c.req.json<{
-      name: string;
-      title?: string;
-      title_major?: string;
-      cert_name?: string;
-      cert_major?: string;
-      safety_cert?: string;
-      memo?: string;
-    }>();
+    const body = await c.req.json();
+    if (!body.name) return c.json({ error: '姓名不能为空' }, 400);
 
-    if (!body.name) {
-      return c.json({ error: 'Name is required' }, 400);
-    }
+    const payload = c.get('jwtPayload') as { username: string };
+    const currentUser = payload.username;
 
-    // 先查出老姓名以更新其关联的业绩姓名（外键级联）
-    const oldManager = await c.env.DB.prepare('SELECT name FROM project_managers WHERE id = ?')
-      .bind(id)
-      .first<{ name: string }>();
-
-    if (!oldManager) {
-      return c.json({ error: 'Manager not found' }, 404);
-    }
-
-    // 开启数据库级联更新：修改经理名字
     await c.env.DB.prepare(
-      `UPDATE project_managers 
-       SET name = ?, title = ?, title_major = ?, cert_name = ?, cert_major = ?, safety_cert = ?, memo = ?
-       WHERE id = ?`
+      'UPDATE project_managers SET name = ?, title = ?, title_major = ?, cert_name = ?, cert_major = ?, safety_cert = ?, memo = ? WHERE id = ?'
     )
       .bind(
-        body.name.trim(),
+        body.name,
         body.title || '',
         body.title_major || '',
         body.cert_name || '一级建造师',
@@ -168,92 +229,43 @@ app.put('/api/managers/:id', async (c) => {
       )
       .run();
 
+    await writeAuditLog(c.env.DB, currentUser, 'EDIT_MANAGER', Number(id), `更新项目经理信息: ${body.name}`);
+
     return c.json({ success: true });
   } catch (err: any) {
     return c.json({ error: err.message }, 500);
   }
 });
 
-// 删除项目经理
+// 删除项目经理 (外键级联删除关联的业绩项目)
 app.delete('/api/managers/:id', async (c) => {
   try {
     const id = c.req.param('id');
+    const payload = c.get('jwtPayload') as { username: string };
+    const currentUser = payload.username;
+
+    // 先查出姓名，以完善审计信息
+    const mgr = await c.env.DB.prepare('SELECT name FROM project_managers WHERE id = ?')
+      .bind(id)
+      .first();
+
     await c.env.DB.prepare('DELETE FROM project_managers WHERE id = ?').bind(id).run();
+
+    const nameStr = mgr ? (mgr.name as string) : `ID ${id}`;
+    await writeAuditLog(c.env.DB, currentUser, 'DELETE_MANAGER', Number(id), `删除项目经理: ${nameStr} 及其名下的全部关联业绩`);
+
     return c.json({ success: true });
   } catch (err: any) {
     return c.json({ error: err.message }, 500);
   }
 });
 
-
-// ==========================================
-// 2. 工程业绩接口 (Projects CRUD & View)
-// ==========================================
-
-// 获取所有业绩（用于项目视图，附带项目经理的空闲状态）
-app.get('/api/projects', async (c) => {
-  try {
-    const q = c.req.query('q');
-    const role = c.req.query('role');
-    const record_status = c.req.query('record_status');
-    const manager_status = c.req.query('manager_status'); // 'idle' (空闲) | 'locked' (锁定)
-
-    let sql = `
-      SELECT p.*,
-             (SELECT COUNT(*) FROM projects p2 WHERE p2.manager_name = p.manager_name AND (p2.filing_status = '备案中' OR p2.duration LIKE '%在建%' OR p2.duration LIKE '%至今%')) as manager_locked_count
-      FROM projects p
-    `;
-    
-    const conditions: string[] = [];
-    const params: any[] = [];
-
-    if (q) {
-      conditions.push('(p.project_name LIKE ? OR p.manager_name LIKE ?)');
-      params.push(`%${q}%`);
-      params.push(`%${q}%`);
-    }
-    if (role) {
-      conditions.push('p.role = ?');
-      params.push(role);
-    }
-    if (record_status) {
-      conditions.push('p.record_status LIKE ?');
-      params.push(`%${record_status}%`);
-    }
-
-    if (conditions.length > 0) {
-      sql += ' WHERE ' + conditions.join(' AND ');
-    }
-
-    sql += ' ORDER BY p.id DESC';
-
-    const { results } = await c.env.DB.prepare(sql).bind(...params).all();
-
-    // 内存处理项目关联经理的空闲状态
-    let processed = results.map((row: any) => {
-      const isLocked = row.manager_locked_count > 0;
-      return {
-        ...row,
-        manager_status: isLocked ? 'locked' : 'idle',
-      };
-    });
-
-    if (manager_status) {
-      processed = processed.filter((row: any) => row.manager_status === manager_status);
-    }
-
-    return c.json(processed);
-  } catch (err: any) {
-    return c.json({ error: err.message }, 500);
-  }
-});
-
-// 获取指定项目经理的全部业绩
+// 获取特定项目经理关联的所有代表项目
 app.get('/api/managers/:name/projects', async (c) => {
   try {
     const name = c.req.param('name');
     const { results } = await c.env.DB.prepare(
-      'SELECT * FROM projects WHERE manager_name = ? ORDER BY id DESC'
+      'SELECT * FROM projects WHERE manager_name = ? ORDER BY duration DESC'
     )
       .bind(name)
       .all();
@@ -263,92 +275,139 @@ app.get('/api/managers/:name/projects', async (c) => {
   }
 });
 
-// 新增工程业绩
-app.post('/api/projects', async (c) => {
-  try {
-    const body = await c.req.json<{
-      manager_name: string;
-      project_name: string;
-      role?: string;
-      area?: string;
-      amount?: string;
-      duration?: string;
-      record_status?: string;
-      filing_status?: string;
-      filing_post?: string;
-      filing_start?: string;
-      filing_end?: string;
-    }>();
+// ==========================================
+// 4. 项目管理接口 (Projects CRUD)
+// ==========================================
 
-    if (!body.manager_name || !body.project_name) {
-      return c.json({ error: 'Manager name and project name are required' }, 400);
+// 获取全量工程项目列表（自动联查负责人的当前可用状态）
+app.get('/api/projects', async (c) => {
+  try {
+    const q = c.req.query('q');
+    const role = c.req.query('role');
+    const record_status = c.req.query('record_status');
+
+    let sql = `
+      SELECT 
+        p.*,
+        pm.id as manager_id,
+        (
+          SELECT SUM(CASE WHEN inner_p.filing_status = '备案中' OR inner_p.duration LIKE '%在建%' OR inner_p.duration LIKE '%至今%' THEN 1 ELSE 0 END)
+          FROM projects inner_p
+          WHERE inner_p.manager_name = p.manager_name
+        ) as manager_locked_count
+      FROM projects p
+      LEFT JOIN project_managers pm ON p.manager_name = pm.name
+    `;
+
+    const whereConditions: string[] = [];
+    const params: any[] = [];
+
+    if (q) {
+      whereConditions.push('(p.project_name LIKE ? OR p.manager_name LIKE ?)');
+      params.push(`%${q}%`, `%${q}%`);
+    }
+    if (role && role !== 'all') {
+      whereConditions.push('p.role = ?');
+      params.push(role);
+    }
+    if (record_status && record_status !== 'all') {
+      whereConditions.push('p.record_status LIKE ?');
+      params.push(`%${record_status}%`);
     }
 
-    const result = await c.env.DB.prepare(
-      `INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-    )
-      .bind(
-        body.manager_name.trim(),
-        body.project_name.trim(),
-        body.role || '',
-        body.area || '',
-        body.amount || '',
-        body.duration || '',
-        body.record_status || '',
-        body.filing_status || '',
-        body.filing_post || '',
-        body.filing_start || '',
-        body.filing_end || ''
-      )
-      .run();
+    if (whereConditions.length > 0) {
+      sql += ' WHERE ' + whereConditions.join(' AND ');
+    }
 
-    return c.json({ success: true, id: result.meta.last_row_id });
+    sql += ' ORDER BY p.duration DESC, p.id DESC';
+
+    const { results } = await c.env.DB.prepare(sql).bind(...params).all();
+
+    // 格式化输出经理的状态
+    const formatted = results.map((row: any) => ({
+      ...row,
+      manager_status: Number(row.manager_locked_count || 0) > 0 ? 'locked' : 'idle',
+    }));
+
+    return c.json(formatted);
   } catch (err: any) {
     return c.json({ error: err.message }, 500);
   }
 });
 
-// 编辑工程业绩
-app.put('/api/projects/:id', async (c) => {
+// 增加工程业绩
+app.post('/api/projects', async (c) => {
   try {
-    const id = c.req.param('id');
-    const body = await c.req.json<{
-      project_name: string;
-      role?: string;
-      area?: string;
-      amount?: string;
-      duration?: string;
-      record_status?: string;
-      filing_status?: string;
-      filing_post?: string;
-      filing_start?: string;
-      filing_end?: string;
-    }>();
-
-    if (!body.project_name) {
-      return c.json({ error: 'Project name is required' }, 400);
+    const body = await c.req.json();
+    if (!body.manager_name || !body.project_name) {
+      return c.json({ error: '负责人姓名与项目名称不能为空' }, 400);
     }
 
-    await c.env.DB.prepare(
-      `UPDATE projects 
-       SET project_name = ?, role = ?, area = ?, amount = ?, duration = ?, record_status = ?, filing_status = ?, filing_post = ?, filing_start = ?, filing_end = ?
-       WHERE id = ?`
+    const payload = c.get('jwtPayload') as { username: string };
+    const currentUser = payload.username;
+
+    const result = await c.env.DB.prepare(
+      'INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     )
       .bind(
-        body.project_name.trim(),
-        body.role || '',
+        body.manager_name,
+        body.project_name,
+        body.role || '项目经理',
         body.area || '',
         body.amount || '',
         body.duration || '',
-        body.record_status || '',
+        body.record_status || '无',
         body.filing_status || '',
         body.filing_post || '',
-        body.filing_start || '',
-        body.filing_end || '',
+        body.filing_start || null,
+        body.filing_end || null
+      )
+      .run();
+
+    const newId = result.meta.last_row_id ? Number(result.meta.last_row_id) : null;
+    await writeAuditLog(
+      c.env.DB,
+      currentUser,
+      'ADD_PROJECT',
+      newId,
+      `为经理 ${body.manager_name} 登记代表业绩: ${body.project_name}`
+    );
+
+    return c.json({ success: true, id: newId });
+  } catch (err: any) {
+    return c.json({ error: err.message }, 500);
+  }
+});
+
+// 修改工程业绩信息
+app.put('/api/projects/:id', async (c) => {
+  try {
+    const id = c.req.param('id');
+    const body = await c.req.json();
+    if (!body.project_name) return c.json({ error: '项目名称不能为空' }, 400);
+
+    const payload = c.get('jwtPayload') as { username: string };
+    const currentUser = payload.username;
+
+    await c.env.DB.prepare(
+      'UPDATE projects SET project_name = ?, role = ?, area = ?, amount = ?, duration = ?, record_status = ?, filing_status = ?, filing_post = ?, filing_start = ?, filing_end = ? WHERE id = ?'
+    )
+      .bind(
+        body.project_name,
+        body.role || '项目经理',
+        body.area || '',
+        body.amount || '',
+        body.duration || '',
+        body.record_status || '无',
+        body.filing_status || '',
+        body.filing_post || '',
+        body.filing_start || null,
+        body.filing_end || null,
         id
       )
       .run();
+
+    await writeAuditLog(c.env.DB, currentUser, 'EDIT_PROJECT', Number(id), `更新工程业绩信息: ${body.project_name}`);
 
     return c.json({ success: true });
   } catch (err: any) {
@@ -360,7 +419,21 @@ app.put('/api/projects/:id', async (c) => {
 app.delete('/api/projects/:id', async (c) => {
   try {
     const id = c.req.param('id');
+    const payload = c.get('jwtPayload') as { username: string };
+    const currentUser = payload.username;
+
+    const proj = await c.env.DB.prepare('SELECT project_name, manager_name FROM projects WHERE id = ?')
+      .bind(id)
+      .first();
+
     await c.env.DB.prepare('DELETE FROM projects WHERE id = ?').bind(id).run();
+
+    const detailStr = proj
+      ? `删除 ${proj.manager_name} 关联的业绩: ${proj.project_name}`
+      : `删除业绩记录 ID ${id}`;
+
+    await writeAuditLog(c.env.DB, currentUser, 'DELETE_PROJECT', Number(id), detailStr);
+
     return c.json({ success: true });
   } catch (err: any) {
     return c.json({ error: err.message }, 500);
@@ -368,68 +441,69 @@ app.delete('/api/projects/:id', async (c) => {
 });
 
 // ==========================================
-// 3. 统计看板数据接口 (Metrics)
+// 5. 仪表盘统计接口 (Dashboard stats)
 // ==========================================
 app.get('/api/stats', async (c) => {
   try {
-    // 1. 项目经理总数
-    const managersCount = await c.env.DB.prepare(
-      'SELECT COUNT(*) as count FROM project_managers'
-    ).first<{ count: number }>();
+    // 1. 人员总数
+    const countRes = (await c.env.DB.prepare(
+      'SELECT COUNT(*) as total FROM project_managers'
+    ).first()) as any;
 
-    // 2. 业绩总合同金额 (提取数字并求和)
-    // D1/SQLite 可以使用带有 CAST 的简单方法，但在内存中累加最稳妥
-    const allProjects = await c.env.DB.prepare('SELECT amount FROM projects').all();
+    // 2. 项目累计合同金额 (转换 万元 进行求和)
+    const projectsList = (await c.env.DB.prepare(
+      'SELECT amount FROM projects'
+    ).all()) as any;
+
     let totalAmount = 0;
-    allProjects.results.forEach((row: any) => {
-      const match = strToNum(row.amount);
-      totalAmount += match;
+    projectsList.results.forEach((row: any) => {
+      if (row.amount) {
+        const match = row.amount.match(/[\d\.]+/);
+        if (match) {
+          totalAmount += parseFloat(match[0]);
+        }
+      }
     });
 
-    // 3. 计算锁定和空闲经理数
-    const managersStatus = await c.env.DB.prepare(`
+    // 3. 锁定经理与空闲经理人数计算
+    const lockStats = await c.env.DB.prepare(`
       SELECT 
-        (SELECT COUNT(*) FROM projects p WHERE p.manager_name = pm.name AND (p.filing_status = '备案中' OR p.duration LIKE '%在建%' OR p.duration LIKE '%至今%')) as locked_count
-      FROM project_managers pm
-    `).all();
-    
-    let lockedCount = 0;
-    managersStatus.results.forEach((row: any) => {
-      if (row.locked_count > 0) lockedCount++;
-    });
-    const idleCount = (managersCount?.count || 0) - lockedCount;
+        COUNT(id) as total_mgr,
+        SUM(CASE WHEN locked_count > 0 THEN 1 ELSE 0 END) as locked_mgr
+      FROM (
+        SELECT 
+          pm.id,
+          SUM(CASE WHEN p.filing_status = '备案中' OR p.duration LIKE '%在建%' OR p.duration LIKE '%至今%' THEN 1 ELSE 0 END) as locked_count
+        FROM project_managers pm
+        LEFT JOIN projects p ON pm.name = p.manager_name
+        GROUP BY pm.id
+      )
+    `).first() as any;
 
-    // 4. 即将到期备案警报数 (30天内到期)
-    const todayStr = new Date().toISOString().slice(0, 10);
-    const thirtyDaysLater = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-    
-    const nearExpiry = await c.env.DB.prepare(
-      `SELECT COUNT(*) as count FROM projects 
-       WHERE filing_status = '备案中' AND filing_end != '' AND filing_end >= ? AND filing_end <= ?`
-    )
-      .bind(todayStr, thirtyDaysLater)
-      .first<{ count: number }>();
+    const totalManagers = countRes?.total || 0;
+    const lockedManagers = lockStats?.locked_mgr || 0;
+    const idleManagers = totalManagers - lockedManagers;
+
+    // 4. 备案到期预警：备案状态为备案中，且截止日期在 30 天以内的项目数量
+    const expiryRes = await c.env.DB.prepare(`
+      SELECT COUNT(*) as near_expiry 
+      FROM projects 
+      WHERE filing_status = '备案中' 
+        AND filing_end IS NOT NULL 
+        AND filing_end != ''
+        AND date(filing_end) <= date('now', '+30 days')
+    `).first() as any;
 
     return c.json({
-      total_managers: managersCount?.count || 0,
-      total_amount_万元: Math.round(totalAmount),
-      locked_managers: lockedCount,
-      idle_managers: idleCount,
-      near_expiry: nearExpiry?.count || 0,
+      total_managers: totalManagers,
+      total_amount_万元: totalAmount,
+      locked_managers: lockedManagers,
+      idle_managers: idleManagers >= 0 ? idleManagers : 0,
+      near_expiry: expiryRes?.near_expiry || 0,
     });
   } catch (err: any) {
     return c.json({ error: err.message }, 500);
   }
 });
-
-// 辅助函数：从金额字符串提取数字（如 "138531万元" -> 138531）
-function strToNum(str: string): number {
-  if (!str) return 0;
-  const match = str.match(/[\d\.]+/);
-  if (match) {
-    return parseFloat(match[0]);
-  }
-  return 0;
-}
 
 export default app;
