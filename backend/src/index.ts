@@ -9,6 +9,52 @@ type Bindings = {
 const app = new Hono<{ Bindings: Bindings }>();
 const JWT_SECRET = 'xmjl-super-secret-key-2026';
 
+let isDbInitialized = false;
+
+// 自动建表与默认数据初始化自愈函数
+async function ensureTablesExist(db: D1Database) {
+  try {
+    // 检查并创建 users 表
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+      )
+    `).run();
+
+    // 检查并创建 audit_logs 表
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS audit_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_name TEXT NOT NULL,
+        action TEXT NOT NULL,
+        target_id INTEGER,
+        details TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+      )
+    `).run();
+
+    // 确保默认管理员账户存在且密码哈希正确 (admin123)
+    const adminHash = '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9';
+    const adminUser = (await db.prepare('SELECT * FROM users WHERE username = ?').bind('admin').first()) as { password?: string } | null;
+    if (!adminUser) {
+      await db.prepare('INSERT OR IGNORE INTO users (username, password) VALUES (?, ?)')
+        .bind('admin', adminHash)
+        .run();
+      console.log('自动创建并初始化默认 admin 账号完成');
+    } else if (adminUser.password === '240aa26b5936583137502e9f55d0822a4122d5457a24a20366b5b6e7534d7dff') {
+      await db.prepare('UPDATE users SET password = ? WHERE username = ?')
+        .bind(adminHash, 'admin')
+        .run();
+      console.log('检测到旧的错误密码哈希，已自动重置 admin 密码为 admin123');
+    }
+  } catch (err) {
+    console.error('自动初始化数据库表失败:', err);
+  }
+}
+
 // 启用 CORS，允许前端开发与生产环境跨域访问（必须允许 Authorization 头部）
 app.use(
   '/api/*',
@@ -18,6 +64,15 @@ app.use(
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   })
 );
+
+// 自动初始化数据库中间件
+app.use('/api/*', async (c, next) => {
+  if (!isDbInitialized) {
+    await ensureTablesExist(c.env.DB);
+    isDbInitialized = true;
+  }
+  return next();
+});
 
 // SHA-256 密码哈希辅助函数 (无依赖标准实现)
 async function sha256(message: string): Promise<string> {
