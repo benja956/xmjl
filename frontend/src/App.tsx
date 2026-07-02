@@ -65,10 +65,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 展开项目经理的业绩详情 (记录当前展开的经理姓名)
-  const [expandedManager, setExpandedManager] = useState<string | null>(null);
-  const [managerProjects, setManagerProjects] = useState<Project[]>([]);
-  const [loadingProjects, setLoadingProjects] = useState(false);
+
 
   // ==========================================
   // 筛选器状态 (项目经理视图)
@@ -153,27 +150,7 @@ function App() {
     fetchAllData();
   }, []);
 
-  // 展开某位经理的业绩
-  const handleToggleManager = async (managerName: string) => {
-    if (expandedManager === managerName) {
-      setExpandedManager(null);
-      setManagerProjects([]);
-      return;
-    }
 
-    setExpandedManager(managerName);
-    try {
-      setLoadingProjects(true);
-      const res = await fetch(`${API_BASE}/api/managers/${managerName}/projects`);
-      if (res.ok) {
-        setManagerProjects(await res.json());
-      }
-    } catch (err) {
-      console.error('加载项目失败', err);
-    } finally {
-      setLoadingProjects(false);
-    }
-  };
 
   // ==========================================
   // 增删改查请求处理
@@ -240,27 +217,17 @@ function App() {
 
       setShowProjModal(false);
       await fetchAllData();
-      // 如果是在经理展开行里操作，同步刷新该经理的项目明细
-      if (expandedManager) {
-        const nameToFetch = isEdit ? editingProject.manager_name : targetManagerName;
-        const freshRes = await fetch(`${API_BASE}/api/managers/${nameToFetch}/projects`);
-        if (freshRes.ok) setManagerProjects(await freshRes.json());
-      }
     } catch (err: any) {
       alert(err.message);
     }
   };
 
-  const handleDeleteProject = async (projId: number, managerName: string) => {
+  const handleDeleteProject = async (projId: number) => {
     if (!confirm('确定要删除这条业绩项目吗？')) return;
     try {
       const res = await fetch(`${API_BASE}/api/projects/${projId}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('删除项目失败');
       await fetchAllData();
-      if (expandedManager === managerName) {
-        const freshRes = await fetch(`${API_BASE}/api/managers/${managerName}/projects`);
-        if (freshRes.ok) setManagerProjects(await freshRes.json());
-      }
     } catch (err: any) {
       alert(err.message);
     }
@@ -676,8 +643,10 @@ function App() {
             </div>
           ) : (
             <div className="row g-3">
-              {filteredManagers.map((mgr) => (
-                <div key={mgr.id} className="col-12">
+              {filteredManagers.map((mgr) => {
+                const myProjects = projects.filter((p) => p.manager_name === mgr.name);
+                return (
+                  <div key={mgr.id} className="col-12">
                   <div className="card border-0 shadow-sm">
                     <div className="card-body">
                       <div className="d-flex flex-wrap align-items-center justify-content-between gap-3">
@@ -698,14 +667,6 @@ function App() {
                         </div>
 
                         <div className="d-flex flex-wrap gap-2">
-                          <button
-                            className="btn btn-sm btn-outline-primary"
-                            onClick={() => handleToggleManager(mgr.name)}
-                          >
-                            <i className="bi bi-file-earmark-spreadsheet me-1"></i>
-                            项目业绩 ({mgr.project_count})
-                            <i className={`bi bi-chevron-${expandedManager === mgr.name ? 'up' : 'down'} ms-1`}></i>
-                          </button>
                           <button className="btn btn-sm btn-outline-secondary" onClick={() => openEditManager(mgr)}>
                             编辑基本信息
                           </button>
@@ -732,76 +693,70 @@ function App() {
                       </div>
                     </div>
 
-                    {/* 展开的折叠业绩列表 */}
-                    {expandedManager === mgr.name && (
-                      <div className="card-footer bg-light border-0 px-4 py-3">
-                        <div className="d-flex justify-content-between align-items-center mb-3">
-                          <h6 className="mb-0 font-weight-bold text-secondary">
-                            <i className="bi bi-list-task me-1"></i> {mgr.name} 的代表业绩列表
-                          </h6>
-                          <button className="btn btn-xs btn-primary py-1 px-2.5 fs-7" onClick={() => openAddProject(mgr.name)}>
-                            <i className="bi bi-plus-circle me-1"></i> 新增业绩项目
-                          </button>
-                        </div>
-
-                        {loadingProjects ? (
-                          <div className="text-center py-4">
-                            <div className="spinner-border spinner-border-sm text-primary" role="status"></div>
-                            <p className="mt-2 text-muted small mb-0">正在查询 D1 数据库业绩明细...</p>
-                          </div>
-                        ) : managerProjects.length === 0 ? (
-                          <div className="text-center text-muted py-3 small bg-white rounded border border-light shadow-2xs">
-                            <p className="mb-0">该人员暂无添加任何工程业绩</p>
-                          </div>
-                        ) : (
-                          <div className="table-responsive bg-white rounded border border-light shadow-2xs">
-                            <table className="table table-hover table-striped mb-0 align-middle small">
-                              <thead className="table-light">
-                                <tr>
-                                  <th>项目名称</th>
-                                  <th>担任职务</th>
-                                  <th>合同金额</th>
-                                  <th>建筑面积</th>
-                                  <th>开竣工时间</th>
-                                  <th>四库平台</th>
-                                  <th>备案状态</th>
-                                  <th>操作</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {managerProjects.map((p) => {
-                                  const isProjLocked = p.filing_status === '备案中' || p.duration.includes('在建') || p.duration.includes('至今');
-                                  return (
-                                    <tr key={p.id}>
-                                      <td className="font-weight-bold">{p.project_name}</td>
-                                      <td>{p.role}</td>
-                                      <td className="text-primary font-weight-bold">{p.amount}</td>
-                                      <td>{p.area}</td>
-                                      <td>{p.duration}</td>
-                                      <td>{p.record_status}</td>
-                                      <td>
-                                        <span className={`badge ${isProjLocked ? 'bg-danger-subtle text-danger' : 'bg-success-subtle text-success'}`}>
-                                          {p.filing_status || '无'} {p.filing_end && `(至 ${p.filing_end})`}
-                                        </span>
-                                      </td>
-                                      <td>
-                                        <div className="btn-group btn-group-xs">
-                                          <button className="btn btn-outline-secondary py-0.5 px-2" onClick={() => openEditProject(p)}>编辑</button>
-                                          <button className="btn btn-outline-danger py-0.5 px-2" onClick={() => handleDeleteProject(p.id, mgr.name)}>删除</button>
-                                        </div>
-                                      </td>
-                                    </tr>
-                                  );
-                                })}
-                              </tbody>
-                            </table>
-                          </div>
-                        )}
+                    {/* 展平的业绩列表 */}
+                    <div className="card-footer bg-light border-0 px-4 py-3">
+                      <div className="d-flex justify-content-between align-items-center mb-3">
+                        <h6 className="mb-0 font-weight-bold text-secondary">
+                          <i className="bi bi-list-task me-1"></i> 工程业绩列表 ({myProjects.length})
+                        </h6>
+                        <button className="btn btn-xs btn-primary py-1 px-2.5 fs-7" onClick={() => openAddProject(mgr.name)}>
+                          <i className="bi bi-plus-circle me-1"></i> 新增业绩项目
+                        </button>
                       </div>
-                    )}
+
+                      {myProjects.length === 0 ? (
+                        <div className="text-center text-muted py-3 small bg-white rounded border border-light shadow-2xs">
+                          <p className="mb-0">该人员暂无添加任何工程业绩</p>
+                        </div>
+                      ) : (
+                        <div className="table-responsive bg-white rounded border border-light shadow-2xs">
+                          <table className="table table-hover table-striped mb-0 align-middle small">
+                            <thead className="table-light">
+                              <tr>
+                                <th>项目名称</th>
+                                <th>担任职务</th>
+                                <th>合同金额</th>
+                                <th>建筑面积</th>
+                                <th>开竣工时间</th>
+                                <th>四库平台</th>
+                                <th>备案状态</th>
+                                <th>操作</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {myProjects.map((p) => {
+                                const isProjLocked = p.filing_status === '备案中' || p.duration.includes('在建') || p.duration.includes('至今');
+                                return (
+                                  <tr key={p.id}>
+                                    <td className="font-weight-bold">{p.project_name}</td>
+                                    <td>{p.role}</td>
+                                    <td className="text-primary font-weight-bold">{p.amount}</td>
+                                    <td>{p.area}</td>
+                                    <td>{p.duration}</td>
+                                    <td>{p.record_status}</td>
+                                    <td>
+                                      <span className={`badge ${isProjLocked ? 'bg-danger-subtle text-danger' : 'bg-success-subtle text-success'}`}>
+                                        {p.filing_status || '无'} {p.filing_end && `(至 ${p.filing_end})`}
+                                      </span>
+                                    </td>
+                                    <td>
+                                      <div className="btn-group btn-group-xs">
+                                        <button type="button" className="btn btn-outline-secondary py-0.5 px-2" onClick={() => openEditProject(p)}>编辑</button>
+                                        <button type="button" className="btn btn-outline-danger py-0.5 px-2" onClick={() => handleDeleteProject(p.id)}>删除</button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              ))}
+              );
+            })}
             </div>
           )}
         </div>
