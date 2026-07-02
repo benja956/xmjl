@@ -59,20 +59,21 @@ app.post('/api/login', async (c) => {
       return c.json({ error: '用户名和密码不能为空' }, 400);
     }
 
-    // 云端数据库自愈逻辑：若发现没有用户，则自动注入默认 admin 账号
+    // 强健的自愈逻辑：若系统中没有任何叫 admin 的用户，则直接注入默认 admin
     try {
-      const countObj = (await c.env.DB.prepare(
-        'SELECT COUNT(*) as count FROM users'
-      ).first()) as { count: number } | null;
-      if (!countObj || countObj.count === 0) {
+      const adminUser = await c.env.DB.prepare(
+        'SELECT * FROM users WHERE username = ?'
+      ).bind('admin').first();
+      
+      if (!adminUser) {
         const adminHash = '240aa26b5936583137502e9f55d0822a4122d5457a24a20366b5b6e7534d7dff';
         await c.env.DB.prepare('INSERT OR IGNORE INTO users (username, password) VALUES (?, ?)')
           .bind('admin', adminHash)
           .run();
-        console.log('数据库未检测到用户，已自动初始化默认管理员账户 admin');
+        console.log('未检测到管理员 admin，已自动初始化默认账户');
       }
     } catch (dbErr) {
-      console.warn('检查或自动创建用户失败 (可能是迁移表还没就绪，将尝试继续验证):', dbErr);
+      console.warn('检查或自动创建用户失败:', dbErr);
     }
 
     const hash = await sha256(password);
@@ -83,7 +84,8 @@ app.post('/api/login', async (c) => {
       .first();
 
     if (!user) {
-      return c.json({ error: '用户名或密码错误' }, 401);
+      // 提供 computed_hash 调试信息，方便对比
+      return c.json({ error: `用户名或密码错误 (Debug: computed_hash=${hash})` }, 401);
     }
 
     // 签发 JWT (有效期 24 小时)
