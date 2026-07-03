@@ -515,7 +515,7 @@ function App() {
           <tr>
             <td className="py-2 position-relative">
               <span 
-                className="badge text-white px-2.5 py-1.5 fs-7.5 font-weight-bold" 
+                className="badge text-white px-2.5 py-1.5 fs-7 font-weight-bold" 
                 style={{ 
                   backgroundColor: mgr.status === 'idle' ? '#22c55e' : '#ef4444',
                   minWidth: '85px',
