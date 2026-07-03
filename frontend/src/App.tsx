@@ -839,7 +839,7 @@ function App() {
                 <thead className="table-light">
                   <tr>
                     <th scope="col" className="py-2.5">姓名</th>
-                    <th scope="col" className="py-2.5">证书名称</th>
+                    <th scope="col" className="py-2.5">人员类型</th>
                     <th scope="col" className="py-2.5">注册专业</th>
                     <th scope="col" className="py-2.5">职称专业</th>
                     <th scope="col" className="py-2.5">安考证书</th>
@@ -867,7 +867,19 @@ function App() {
                             {mgr.name}
                           </span>
                         </td>
-                        <td className="py-2 small text-secondary">{mgr.cert_name || '—'}</td>
+                        <td className="py-2">
+                          <span 
+                            className={`badge rounded-pill fs-8 ${
+                              projects.filter((p) => p.manager_name === mgr.name).some((p) => p.role === '技术负责人')
+                                ? 'bg-info-subtle text-info border border-info-subtle'
+                                : 'bg-primary-subtle text-primary border border-primary-subtle'
+                            }`}
+                          >
+                            {projects.filter((p) => p.manager_name === mgr.name).some((p) => p.role === '技术负责人')
+                              ? '技术负责人'
+                              : '项目经理'}
+                          </span>
+                        </td>
                         <td className="py-2 small font-weight-bold text-dark">{mgr.cert_major || '—'}</td>
                         <td className="py-2 small text-secondary">{mgr.title ? `${mgr.title_major || '未填'} (${mgr.title})` : '—'}</td>
                         <td className="py-2">
