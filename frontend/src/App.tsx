@@ -628,22 +628,7 @@ function App() {
           {myProjects.length > 0 && (
             <tr className="bg-light-subtle">
               <td colSpan={7} className="p-3 bg-light-subtle">
-                <div className="card shadow-sm border border-light-subtle rounded p-3">
-                  <div className="d-flex justify-content-between align-items-center mb-3">
-                    <h6 className="mb-0 text-primary d-flex align-items-center small font-weight-bold">
-                      <i className="bi bi-folder-fill me-2"></i>
-                      {mgr.name} 的参建工程业绩项目列表
-                    </h6>
-                    <button 
-                      type="button" 
-                      className="btn btn-xs btn-outline-primary py-1 px-2.5 rounded-pill fs-8.5 d-flex align-items-center"
-                      onClick={() => openAddProject(mgr.name)}
-                    >
-                      <i className="bi bi-plus-lg me-1"></i>添加关联项目
-                    </button>
-                  </div>
-                  
-                  <div className="table-responsive">
+                <div className="table-responsive border rounded bg-white shadow-sm">
                     <table className="table table-sm table-hover table-bordered mb-0 align-middle bg-white fs-8.5">
                       <thead className="table-light">
                         <tr>
@@ -698,7 +683,6 @@ function App() {
                       </tbody>
                     </table>
                   </div>
-                </div>
               </td>
             </tr>
           )}
