@@ -49,11 +49,18 @@ interface AuditLog {
 }
 
 // 自动决定 API 路径
-const API_BASE = import.meta.env.DEV
-  ? 'http://localhost:8787'
-  : window.location.host.endsWith('pages.dev')
-  ? 'https://backend.benja956.workers.dev'
-  : `${window.location.protocol}//api.${window.location.host.replace(/^www\./, '')}`;
+const getApiBase = () => {
+  if (import.meta.env.DEV) {
+    const port = window.location.port;
+    if (port === '5174') return 'http://localhost:8788';
+    if (port === '5175') return 'http://localhost:8789';
+    return 'http://localhost:8787';
+  }
+  return window.location.host.endsWith('pages.dev')
+    ? 'https://backend.benja956.workers.dev'
+    : `${window.location.protocol}//api.${window.location.host.replace(/^www\./, '')}`;
+};
+const API_BASE = getApiBase();
 
 function App() {
   // ==========================================
