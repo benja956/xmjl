@@ -107,6 +107,11 @@ def generate_import_sql(excel_path, sql_output_path):
             title_major = str(get_cell_value(r, 4) or "").strip()
             cert_name = str(get_cell_value(r, 5) or "").strip()
             cert_major = str(get_cell_value(r, 6) or "").strip()
+            # 清洗脏数据：统一分割符为英文半角逗号，并使用正则强行切分粘连专业名
+            cert_major = cert_major.replace('\n', ',').replace('，', ',').replace('、', ',').replace('；', ',').replace(';', ',')
+            cert_major = re.sub(r'(工程|专业)(?=[\u4e00-\u9fa5])', r'\1,', cert_major)
+            cert_major = re.sub(r',+', ',', cert_major).strip(',')
+            
             safety_cert = str(get_cell_value(r, 7) or "").strip()
             performance_text = get_cell_value(r, 8)
             filing_status = str(get_cell_value(r, 9) or "").strip()
