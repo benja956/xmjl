@@ -869,15 +869,23 @@ function App() {
                         </td>
                         <td className="py-2">
                           <span 
-                            className={`badge rounded-pill fs-8 ${
-                              projects.filter((p) => p.manager_name === mgr.name).some((p) => p.role === '技术负责人')
-                                ? 'bg-info-subtle text-info border border-info-subtle'
-                                : 'bg-primary-subtle text-primary border border-primary-subtle'
-                            }`}
-                          >
-                            {projects.filter((p) => p.manager_name === mgr.name).some((p) => p.role === '技术负责人')
+                            className="badge rounded-circle d-inline-flex align-items-center justify-content-center text-white" 
+                            style={{ 
+                              width: '24px', 
+                              height: '24px', 
+                              backgroundColor: projects.filter((p) => p.manager_name === mgr.name).some((p) => p.role === '技术负责人')
+                                ? '#0ea5e9'
+                                : '#a855f7',
+                              fontWeight: 'bold',
+                              fontSize: '0.8rem'
+                            }}
+                            title={projects.filter((p) => p.manager_name === mgr.name).some((p) => p.role === '技术负责人')
                               ? '技术负责人'
                               : '项目经理'}
+                          >
+                            {projects.filter((p) => p.manager_name === mgr.name).some((p) => p.role === '技术负责人')
+                              ? '技'
+                              : '项'}
                           </span>
                         </td>
                         <td className="py-2 small font-weight-bold text-dark">{mgr.cert_major || '—'}</td>
