@@ -834,102 +834,95 @@ function App() {
               <p className="lead mb-0 text-muted">✍️ 暂无符合筛选条件的项目经理</p>
             </div>
           ) : (
-            <div className="list-group border shadow-sm rounded overflow-hidden">
-              {filteredManagers.map((mgr) => {
-                const myProjects = projects.filter((p) => p.manager_name === mgr.name);
-                return (
-                  <div 
-                    key={mgr.id} 
-                    className="list-group-item list-group-item-action d-flex align-items-center justify-content-between py-3 border-start-0 border-end-0"
-                    style={{ borderColor: 'rgba(0, 0, 0, 0.07)' }}
-                  >
-                    <div className="d-flex align-items-center flex-grow-1 row g-2">
-                      
-                      {/* 1. 姓名与状态 (占 3 个栅格) */}
-                      <div className="col-12 col-md-3">
-                        <div className="d-flex align-items-center gap-2">
-                          <span className="fs-5 font-weight-bold text-dark">{mgr.name}</span>
-                          <span className={`badge ${mgr.status === 'idle' ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-danger-subtle text-danger border border-danger-subtle'} rounded-pill fs-8`}>
-                            {mgr.status === 'idle' ? '🟢 空闲可投标' : '🔴 在建锁定'}
+            <div className="table-responsive border shadow-sm rounded bg-body">
+              <table className="table table-striped table-hover align-middle mb-0">
+                <thead className="table-light">
+                  <tr>
+                    <th scope="col" className="py-2.5">姓名</th>
+                    <th scope="col" className="py-2.5">证书名称</th>
+                    <th scope="col" className="py-2.5">注册专业</th>
+                    <th scope="col" className="py-2.5">职称专业</th>
+                    <th scope="col" className="py-2.5">安考证书</th>
+                    <th scope="col" className="py-2.5 text-center">名下业绩</th>
+                    <th scope="col" className="py-2.5">备注说明</th>
+                    <th scope="col" className="py-2.5 text-end" style={{ width: '120px' }}>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredManagers.map((mgr) => {
+                    const myProjects = projects.filter((p) => p.manager_name === mgr.name);
+                    return (
+                      <tr key={mgr.id}>
+                        <td className="py-2">
+                          <span 
+                            className="badge text-white px-2.5 py-1.5 fs-7.5 font-weight-bold" 
+                            style={{ 
+                              backgroundColor: mgr.status === 'idle' ? '#22c55e' : '#ef4444',
+                              minWidth: '70px',
+                              display: 'inline-block',
+                              textAlign: 'center'
+                            }}
+                            title={mgr.status === 'idle' ? '空闲可投标' : '在建锁定'}
+                          >
+                            {mgr.name}
                           </span>
-                        </div>
-                      </div>
-
-                      {/* 2. 证书专业与职称 (占 4 个栅格) */}
-                      <div className="col-12 col-md-4">
-                        <div className="d-flex flex-column gap-1">
-                          {mgr.cert_major ? (
-                            <div className="small text-secondary text-truncate" title={mgr.cert_major}>
-                              <span className="badge bg-primary-subtle text-primary border border-primary-subtle me-1.5 fs-8.5">{mgr.cert_name || '注册'}</span>
-                              <strong className="text-dark">{mgr.cert_major}</strong>
-                            </div>
-                          ) : (
-                            <div className="small text-muted">无登记注册证书</div>
-                          )}
-                          {mgr.title && (
-                            <div className="small text-muted text-truncate" title={`${mgr.title_major || '未填'} (${mgr.title})`}>
-                              <span className="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle me-1.5 fs-8.5">职称</span>
-                              <span>{mgr.title_major || '未填'} ({mgr.title})</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* 3. 标签与备注 (占 4 个栅格) */}
-                      <div className="col-12 col-md-4">
-                        <div className="d-flex align-items-center gap-3">
-                          <div className="d-flex flex-column gap-1 flex-shrink-0">
-                            {mgr.safety_cert && mgr.safety_cert !== '无' && (
-                              <span className="badge bg-info-subtle text-info border border-info-subtle fs-8 text-center" style={{ width: '70px', padding: '0.25rem' }}>
-                                安考 {mgr.safety_cert} 证
-                              </span>
-                            )}
-                            <span className="badge bg-light text-dark border fs-8 text-center" style={{ width: '70px', padding: '0.25rem' }}>
-                              业绩 {myProjects.length} 项
+                        </td>
+                        <td className="py-2 small text-secondary">{mgr.cert_name || '—'}</td>
+                        <td className="py-2 small font-weight-bold text-dark">{mgr.cert_major || '—'}</td>
+                        <td className="py-2 small text-secondary">{mgr.title ? `${mgr.title_major || '未填'} (${mgr.title})` : '—'}</td>
+                        <td className="py-2">
+                          {mgr.safety_cert && mgr.safety_cert !== '无' ? (
+                            <span className="badge bg-info-subtle text-info border border-info-subtle fs-8">
+                              安考 {mgr.safety_cert} 证
                             </span>
+                          ) : (
+                            <span className="text-muted">—</span>
+                          )}
+                        </td>
+                        <td className="py-2 text-center">
+                          <span className="badge bg-light text-dark border fs-8">
+                            {myProjects.length} 项
+                          </span>
+                        </td>
+                        <td className="py-2 small text-muted text-truncate" style={{ maxWidth: '250px' }} title={mgr.memo}>
+                          {mgr.memo || '—'}
+                        </td>
+                        <td className="py-2 text-end">
+                          <div className="btn-group btn-group-xs">
+                            <button 
+                              type="button" 
+                              className="btn btn-outline-primary d-flex align-items-center justify-content-center p-1.5 rounded-circle me-1" 
+                              style={{ width: '28px', height: '28px' }}
+                              onClick={() => openAddProject(mgr.name)}
+                              title="添加项目业绩"
+                            >
+                              <i className="bi bi-plus-lg fs-8"></i>
+                            </button>
+                            <button 
+                              type="button" 
+                              className="btn btn-outline-secondary d-flex align-items-center justify-content-center p-1.5 rounded-circle" 
+                              style={{ width: '28px', height: '28px' }}
+                              onClick={() => openEditManager(mgr)}
+                              title="编辑基本信息"
+                            >
+                              <i className="bi bi-pencil-fill fs-8"></i>
+                            </button>
+                            <button 
+                              type="button" 
+                              className="btn btn-outline-danger d-flex align-items-center justify-content-center p-1.5 rounded-circle" 
+                              style={{ width: '28px', height: '28px' }}
+                              onClick={() => handleDeleteManager(mgr.id, mgr.name)}
+                              title="删除人员"
+                            >
+                              <i className="bi bi-trash3-fill fs-8"></i>
+                            </button>
                           </div>
-                          <div className="text-muted fs-8 text-wrap text-truncate-2-lines" title={mgr.memo} style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                            <strong>备注:</strong> {mgr.memo || '暂无说明'}
-                          </div>
-                        </div>
-                      </div>
-
-                    </div>
-
-                    {/* 4. 操作按钮组 */}
-                    <div className="d-flex gap-2 flex-shrink-0 ms-3">
-                      <button 
-                        type="button" 
-                        className="btn btn-sm btn-outline-primary d-flex align-items-center justify-content-center p-1.5 rounded-circle" 
-                        style={{ width: '30px', height: '30px' }}
-                        onClick={() => openAddProject(mgr.name)}
-                        title="添加项目业绩"
-                      >
-                        <i className="bi bi-plus-lg fs-7"></i>
-                      </button>
-                      <button 
-                        type="button" 
-                        className="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center p-1.5 rounded-circle" 
-                        style={{ width: '30px', height: '30px' }}
-                        onClick={() => openEditManager(mgr)}
-                        title="编辑基本信息"
-                      >
-                        <i className="bi bi-pencil-fill fs-7"></i>
-                      </button>
-                      <button 
-                        type="button" 
-                        className="btn btn-sm btn-outline-danger d-flex align-items-center justify-content-center p-1.5 rounded-circle" 
-                        style={{ width: '30px', height: '30px' }}
-                        onClick={() => handleDeleteManager(mgr.id, mgr.name)}
-                        title="删除人员"
-                      >
-                        <i className="bi bi-trash3-fill fs-7"></i>
-                      </button>
-                    </div>
-
-                  </div>
-                );
-              })}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
