@@ -1125,7 +1125,7 @@ function App() {
               <p className="lead mb-0 text-muted">✍️ 暂无符合筛选条件的项目经理</p>
             </div>
           ) : (
-            <div className="table-responsive border shadow-sm rounded bg-body">
+            <div className="table-responsive border shadow-sm rounded bg-body w-fit mw-100">
               <table className="table table-striped table-hover align-middle mb-0 fs-8">
                 <thead className="table-light">
                   <tr>

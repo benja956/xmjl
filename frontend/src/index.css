@@ -48,3 +48,7 @@ body {
 .fs-95 {
   font-size: 0.64rem !important;
 }
+
+.w-fit {
+  width: fit-content !important;
+}
