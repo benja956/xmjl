@@ -1128,15 +1128,15 @@ function App() {
             </div>
           ) : (
             <div className="table-responsive border shadow-sm rounded bg-body" style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto' }}>
-              <table className="table table-striped table-hover align-middle mb-0 fs-8">
+              <table className="table table-striped table-hover align-middle mb-0 fs-8" style={{ tableLayout: 'fixed', width: '100%' }}>
                 <thead className="table-light sticky-top" style={{ zIndex: 10, top: 0 }}>
                   <tr>
-                    <th scope="col" className="py-2.5">姓名</th>
-                    <th scope="col" className="py-2.5">人员类型</th>
-                    <th scope="col" className="py-2.5">注册专业</th>
-                    <th scope="col" className="py-2.5">职称专业</th>
-                    <th scope="col" className="py-2.5">安考证书</th>
-                    <th scope="col" className="py-2.5 text-center">名下业绩</th>
+                    <th scope="col" className="py-2.5" style={{ width: '110px' }}>姓名</th>
+                    <th scope="col" className="py-2.5" style={{ width: '75px' }}>人员类型</th>
+                    <th scope="col" className="py-2.5" style={{ width: '160px' }}>注册专业</th>
+                    <th scope="col" className="py-2.5" style={{ width: '180px' }}>职称专业</th>
+                    <th scope="col" className="py-2.5" style={{ width: '80px' }}>安考证书</th>
+                    <th scope="col" className="py-2.5 text-center" style={{ width: '95px' }}>名下业绩</th>
                     <th scope="col" className="py-2.5">备注说明</th>
                   </tr>
                 </thead>
