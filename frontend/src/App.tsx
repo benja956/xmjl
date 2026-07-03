@@ -79,6 +79,7 @@ function App() {
   // 视图切换: 'manager' (项目经理视图) | 'project' (project 视图)
   const [activeTab, setActiveTab] = useState<'manager' | 'project'>('manager');
   const [activeMenuManagerId, setActiveMenuManagerId] = useState<number | null>(null);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   // const [expandedManagerIds, setExpandedManagerIds] = useState<number[]>([]);
 
   // 数据列表状态
@@ -859,109 +860,121 @@ function App() {
   // 已登录状态，渲染系统主界面
   // ==========================================
   return (
-    <div className="container py-4">
-      {/* 头部标题与用户信息 */}
-      <header className="d-flex flex-wrap align-items-center justify-content-between pb-3 mb-4 border-bottom gap-3">
+    <div className="container py-3">
+      {/* 头部标题与用户信息 (迷你胶囊指标整合) */}
+      <header className="d-flex flex-wrap align-items-center justify-content-between pb-2 mb-3 border-bottom gap-2">
         <div>
-          <h1 className="h2 text-dark font-weight-bold">
+          <h1 className="h4 text-dark font-weight-bold mb-1 d-flex align-items-center">
             <i className="bi bi-buildings-fill text-primary me-2"></i>
             一建注册项目经理业绩台账管理系统
           </h1>
-          <p className="text-muted mb-0 small">
-            基于 Cloudflare D1 + Bootstrap 5 实现的投标与备案状态多维分析看板
-          </p>
+          <div className="d-flex align-items-center gap-1.5 mt-1.5 flex-wrap">
+            <span className="badge bg-light text-secondary border px-2 py-1 fs-8.5 shadow-3xs">
+              <i className="bi bi-people-fill text-primary me-1"></i>
+              总人数: <strong className="text-dark">{stats.total_managers}</strong>人
+            </span>
+            <span className="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 fs-8.5 shadow-3xs">
+              <i className="bi bi-check-circle-fill text-success me-1"></i>
+              空闲可投标: <strong className="text-success">{stats.idle_managers}</strong>人
+            </span>
+            <span className="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 fs-8.5 shadow-3xs">
+              <i className="bi bi-lock-fill text-danger me-1"></i>
+              锁定中: <strong className="text-danger">{stats.locked_managers}</strong>人
+            </span>
+            <span className="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-1 fs-8.5 shadow-3xs">
+              <i className="bi bi-currency-yen text-warning-emphasis me-1"></i>
+              总业绩: <strong className="text-warning-emphasis">{(stats.total_amount_万元 / 10000).toFixed(1)}</strong>亿元
+            </span>
+          </div>
         </div>
-        <div className="d-flex align-items-center gap-3 flex-wrap">
-          <span className="text-secondary small bg-body-tertiary p-2 px-3 rounded shadow-2xs border">
-            <i className="bi bi-person-circle text-primary me-1.5"></i>
-            当前用户: <strong>{username}</strong>
+        <div className="d-flex align-items-center gap-2 flex-wrap">
+          {loading && (
+            <span className="spinner-border spinner-border-sm text-primary me-1" role="status"></span>
+          )}
+          <span className="text-secondary small bg-body-tertiary p-1.5 px-2.5 rounded border fs-8.5">
+            <i className="bi bi-person-circle text-primary me-1"></i>
+            <strong>{username}</strong>
           </span>
-          <button className="btn btn-primary d-flex align-items-center" onClick={openAddManager}>
-            <i className="bi bi-person-plus-fill me-1"></i> 新增项目经理
-          </button>
-          <button className="btn btn-outline-danger d-flex align-items-center" onClick={handleLogout}>
-            <i className="bi bi-box-arrow-right me-1"></i> 退出登录
+          <button className="btn btn-xs btn-outline-danger d-flex align-items-center py-1.5 px-2.5 fs-8.5 rounded-pill" onClick={handleLogout}>
+            <i className="bi bi-box-arrow-right me-1"></i> 退出
           </button>
         </div>
       </header>
 
-      {/* 顶部统计卡片指标 */}
-      {loading ? (
-        <div className="text-center my-4 py-3">
-          <div className="spinner-border text-primary" role="status"></div>
-          <p className="mt-2 text-muted">正在加载统计看板...</p>
+      {/* 全局主控制与快速筛选控制栏 */}
+      <div className="d-flex flex-wrap align-items-center justify-content-between gap-2.5 mb-3 bg-white p-2.5 border rounded shadow-2xs">
+        {/* 左侧：药丸 Tab 切换器 */}
+        <div className="btn-group p-1 bg-body-secondary rounded-pill" style={{ width: 'fit-content' }}>
+          <button
+            type="button"
+            className={`btn btn-xs rounded-pill px-3 py-1.5 fs-8.5 font-weight-bold transition-all border-0 ${activeTab === 'manager' ? 'btn-white shadow-xs text-primary' : 'text-secondary bg-transparent'}`}
+            onClick={() => {
+              setActiveTab('manager');
+              setShowAdvanced(false);
+            }}
+          >
+            <i className="bi bi-person-badge-fill me-1"></i>项目经理视图
+          </button>
+          <button
+            type="button"
+            className={`btn btn-xs rounded-pill px-3 py-1.5 fs-8.5 font-weight-bold transition-all border-0 ${activeTab === 'project' ? 'btn-white shadow-xs text-primary' : 'text-secondary bg-transparent'}`}
+            onClick={() => {
+              setActiveTab('project');
+              setShowAdvanced(false);
+            }}
+          >
+            <i className="bi bi-journal-album me-1"></i>工程业绩视图
+          </button>
         </div>
-      ) : (
-        <section className="row g-3 mb-4">
-          <div className="col-6 col-md-3">
-            <div className="card h-100 border-0 shadow-sm bg-body-tertiary">
-              <div className="card-body d-flex align-items-center justify-content-between">
-                <div>
-                  <h6 className="card-subtitle text-muted mb-1 text-uppercase small">经理总人数</h6>
-                  <h2 className="card-title mb-0 font-weight-bold">{stats.total_managers}</h2>
-                </div>
-                <div className="fs-1 text-primary"><i className="bi bi-people-fill"></i></div>
-              </div>
-            </div>
-          </div>
-          <div className="col-6 col-md-3">
-            <div className="card h-100 border-0 shadow-sm bg-success bg-opacity-10">
-              <div className="card-body d-flex align-items-center justify-content-between">
-                <div>
-                  <h6 className="card-subtitle text-success mb-1 text-uppercase small">可投标（空闲）</h6>
-                  <h2 className="card-title mb-0 text-success font-weight-bold">{stats.idle_managers}</h2>
-                </div>
-                <div className="fs-1 text-success"><i className="bi bi-check-circle-fill"></i></div>
-              </div>
-            </div>
-          </div>
-          <div className="col-6 col-md-3">
-            <div className="card h-100 border-0 shadow-sm bg-danger bg-opacity-10">
-              <div className="card-body d-flex align-items-center justify-content-between">
-                <div>
-                  <h6 className="card-subtitle text-danger mb-1 text-uppercase small">在建锁定</h6>
-                  <h2 className="card-title mb-0 text-danger font-weight-bold">{stats.locked_managers}</h2>
-                </div>
-                <div className="fs-1 text-danger"><i className="bi bi-lock-fill"></i></div>
-              </div>
-            </div>
-          </div>
-          <div className="col-6 col-md-3">
-            <div className="card h-100 border-0 shadow-sm bg-warning bg-opacity-10 border-start border-warning border-4">
-              <div className="card-body d-flex align-items-center justify-content-between">
-                <div>
-                  <h6 className="card-subtitle text-warning mb-1 text-uppercase small">累计业绩金额</h6>
-                  <h2 className="card-title mb-0 text-warning-emphasis font-weight-bold">
-                    {(stats.total_amount_万元 / 10000).toFixed(1)} <span className="fs-6">亿元</span>
-                  </h2>
-                </div>
-                <div className="fs-1 text-warning"><i className="bi bi-currency-yen"></i></div>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
 
-      {/* 视图切换 TAB */}
-      <ul className="nav nav-tabs mb-4">
-        <li className="nav-item">
-          <button
-            className={`nav-link fs-5 py-2 px-4 ${activeTab === 'manager' ? 'active font-weight-bold' : ''}`}
-            onClick={() => setActiveTab('manager')}
-          >
-            <i className="bi bi-person-badge-fill me-2"></i>项目经理视图 (以人为本)
-          </button>
-        </li>
-        <li className="nav-item">
-          <button
-            className={`nav-link fs-5 py-2 px-4 ${activeTab === 'project' ? 'active font-weight-bold' : ''}`}
-            onClick={() => setActiveTab('project')}
-          >
-            <i className="bi bi-journal-album me-2"></i>工程业绩视图 (以项目为本)
-          </button>
-        </li>
-      </ul>
+        {/* 中间：快速搜索输入框 */}
+        <div className="d-flex align-items-center gap-2 flex-grow-1" style={{ maxWidth: '400px', minWidth: '220px' }}>
+          <div className="input-group input-group-sm">
+            <span className="input-group-text bg-light border-end-0 text-muted"><i className="bi bi-search"></i></span>
+            {activeTab === 'manager' ? (
+              <input
+                type="text"
+                className="form-control border-start-0"
+                placeholder="快速检索姓名、职称或备注说明..."
+                value={mgrSearch}
+                onChange={(e) => setMgrSearch(e.target.value)}
+              />
+            ) : (
+              <input
+                type="text"
+                className="form-control border-start-0"
+                placeholder="快速检索业绩项目名称或经理姓名..."
+                value={projSearch}
+                onChange={(e) => setProjSearch(e.target.value)}
+              />
+            )}
+          </div>
+        </div>
 
+        {/* 右侧：功能按钮组 (高级筛选 Toggle、新增按钮、刷新) */}
+        <div className="d-flex align-items-center gap-2">
+          <button
+            type="button"
+            className={`btn btn-xs d-flex align-items-center py-1.5 px-3 rounded-pill fs-8.5 ${showAdvanced ? 'btn-primary text-white' : 'btn-outline-secondary'}`}
+            onClick={() => setShowAdvanced(!showAdvanced)}
+          >
+            <i className="bi bi-funnel me-1"></i>
+            高级筛选 {showAdvanced ? '收起 ▴' : '展开 ▾'}
+          </button>
+          {activeTab === 'manager' ? (
+            <button className="btn btn-xs btn-primary d-flex align-items-center py-1.5 px-3 rounded-pill fs-8.5" onClick={openAddManager}>
+              <i className="bi bi-person-plus-fill me-1"></i> 新增人员
+            </button>
+          ) : (
+            <button className="btn btn-xs btn-primary d-flex align-items-center py-1.5 px-3 rounded-pill fs-8.5" onClick={() => openAddProject('')}>
+              <i className="bi bi-plus-circle-fill me-1"></i> 新增业绩
+            </button>
+          )}
+          <button className="btn btn-xs btn-outline-primary d-flex align-items-center p-1.5 rounded-circle" onClick={fetchAllData} disabled={loading} title="刷新数据">
+            <i className="bi bi-arrow-clockwise"></i>
+          </button>
+        </div>
+      </div>
       {/* 主体展示区 */}
       {error && <div className="alert alert-danger shadow-sm"><i className="bi bi-exclamation-triangle-fill me-2"></i>{error}</div>}
 
@@ -971,118 +984,108 @@ function App() {
         // ==========================================
         <div>
           {/* 筛选面板 */}
-          <div className="card border-0 shadow-sm p-4 mb-4 bg-body-tertiary">
-            <h5 className="mb-3 text-secondary font-weight-bold small text-uppercase">
-              <i className="bi bi-funnel-fill me-1"></i> 多维度组合筛选器 (项目经理)
-            </h5>
-            <div className="row g-3">
-              <div className="col-12 col-md-3">
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="搜索经理姓名或备注..."
-                  value={mgrSearch}
-                  onChange={(e) => setMgrSearch(e.target.value)}
-                />
-              </div>
-              <div className="col-6 col-md-2">
-                <select
-                  className="form-select"
-                  value={mgrStatus}
-                  onChange={(e) => setMgrStatus(e.target.value)}
-                >
-                  <option value="all">人员状态 (全部)</option>
-                  <option value="idle">🟢 空闲 (可投标)</option>
-                  <option value="locked">🔴 锁定 (不可投标)</option>
-                </select>
-              </div>
-              <div className="col-6 col-md-2">
-                <select
-                  className="form-select"
-                  value={mgrSafety}
-                  onChange={(e) => setMgrSafety(e.target.value)}
-                >
-                  <option value="all">安考证 (全部)</option>
-                  <option value="A">A 证</option>
-                  <option value="B">B 证</option>
-                  <option value="C">C 证</option>
-                  <option value="无">无安考证</option>
-                </select>
-              </div>
-              <div className="col-12 col-md-3">
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="筛选证书专业 (如: 建筑/市政)..."
-                  value={mgrCertMajor}
-                  onChange={(e) => setMgrCertMajor(e.target.value)}
-                />
-              </div>
-              <div className="col-6 col-md-2">
-                <button
-                  className="btn btn-outline-secondary w-100"
-                  onClick={() => {
-                    setMgrSearch('');
-                    setMgrStatus('all');
-                    setMgrSafety('all');
-                    setMgrCertMajor('');
-                    setMgrMinAmount('all');
-                    setMgrMinArea('all');
-                    setMgrCompletedIn('all');
-                  }}
-                >
-                  重置筛选
-                </button>
-              </div>
-            </div>
-            {/* 高级过滤条件 */}
-            <div className="row g-3 mt-2 border-top pt-3">
-              <div className="col-6 col-md-4">
-                <div className="input-group">
-                  <span className="input-group-text bg-transparent text-muted small">单笔业绩金额</span>
+          {/* 高级多维筛选面板 (受 showAdvanced 控制展开) */}
+          {showAdvanced && (
+            <div className="card border-0 shadow-2xs p-3.5 mb-3 bg-body-tertiary rounded-3">
+              <div className="row g-2.5">
+                <div className="col-6 col-md-3">
                   <select
-                    className="form-select"
-                    value={mgrMinAmount}
-                    onChange={(e) => setMgrMinAmount(e.target.value)}
+                    className="form-select form-select-sm"
+                    value={mgrStatus}
+                    onChange={(e) => setMgrStatus(e.target.value)}
                   >
-                    <option value="all">金额无限制</option>
-                    <option value="3000">&gt;= 3000 万元</option>
-                    <option value="5000">&gt;= 5000 万元</option>
-                    <option value="10000">&gt;= 1 亿元</option>
+                    <option value="all">人员状态 (全部)</option>
+                    <option value="idle">🟢 空闲 (可投标)</option>
+                    <option value="locked">🔴 锁定 (不可投标)</option>
                   </select>
                 </div>
-              </div>
-              <div className="col-6 col-md-4">
-                <div className="input-group">
-                  <span className="input-group-text bg-transparent text-muted small">单笔项目面积</span>
+                <div className="col-6 col-md-3">
                   <select
-                    className="form-select"
-                    value={mgrMinArea}
-                    onChange={(e) => setMgrMinArea(e.target.value)}
+                    className="form-select form-select-sm"
+                    value={mgrSafety}
+                    onChange={(e) => setMgrSafety(e.target.value)}
                   >
-                    <option value="all">面积无限制</option>
-                    <option value="10000">&gt;= 1 万㎡</option>
-                    <option value="30000">&gt;= 3 万㎡</option>
-                    <option value="50000">&gt;= 5 万㎡</option>
+                    <option value="all">安考证 (全部)</option>
+                    <option value="A">A 证</option>
+                    <option value="B">B 证</option>
+                    <option value="C">C 证</option>
+                    <option value="无">无安考证</option>
                   </select>
                 </div>
-              </div>
-              <div className="col-12 col-md-4">
-                <div className="input-group">
-                  <span className="input-group-text bg-transparent text-muted small">业绩竣工年份</span>
-                  <select
-                    className="form-select"
-                    value={mgrCompletedIn}
-                    onChange={(e) => setMgrCompletedIn(e.target.value)}
+                <div className="col-12 col-md-4">
+                  <input
+                    type="text"
+                    className="form-control form-control-sm"
+                    placeholder="检索证书专业 (如: 建筑/市政)..."
+                    value={mgrCertMajor}
+                    onChange={(e) => setMgrCertMajor(e.target.value)}
+                  />
+                </div>
+                <div className="col-12 col-md-2">
+                  <button
+                    className="btn btn-sm btn-outline-secondary w-100"
+                    onClick={() => {
+                      setMgrSearch('');
+                      setMgrStatus('all');
+                      setMgrSafety('all');
+                      setMgrCertMajor('');
+                      setMgrMinAmount('all');
+                      setMgrMinArea('all');
+                      setMgrCompletedIn('all');
+                    }}
                   >
-                    <option value="all">时间无限制</option>
-                    <option value="3">名下近 3 年有竣工业绩</option>
-                    <option value="5">名下近 5 年有竣工业绩</option>
-                  </select>
+                    重置筛选
+                  </button>
+                </div>
+              </div>
+              <div className="row g-2.5 mt-2 border-top pt-2.5">
+                <div className="col-6 col-md-4">
+                  <div className="input-group input-group-sm">
+                    <span className="input-group-text bg-transparent text-muted small fs-8">单笔业绩金额</span>
+                    <select
+                      className="form-select"
+                      value={mgrMinAmount}
+                      onChange={(e) => setMgrMinAmount(e.target.value)}
+                    >
+                      <option value="all">金额无限制</option>
+                      <option value="3000">&gt;= 3000 万元</option>
+                      <option value="5000">&gt;= 5000 万元</option>
+                      <option value="10000">&gt;= 1 亿元</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="col-6 col-md-4">
+                  <div className="input-group input-group-sm">
+                    <span className="input-group-text bg-transparent text-muted small fs-8">单笔项目面积</span>
+                    <select
+                      className="form-select"
+                      value={mgrMinArea}
+                      onChange={(e) => setMgrMinArea(e.target.value)}
+                    >
+                      <option value="all">面积无限制</option>
+                      <option value="10000">&gt;= 1 万㎡</option>
+                      <option value="30000">&gt;= 3 万㎡</option>
+                      <option value="50000">&gt;= 5 万㎡</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="col-12 col-md-4">
+                  <div className="input-group input-group-sm">
+                    <span className="input-group-text bg-transparent text-muted small fs-8">业绩竣工年份</span>
+                    <select
+                      className="form-select"
+                      value={mgrCompletedIn}
+                      onChange={(e) => setMgrCompletedIn(e.target.value)}
+                    >
+                      <option value="all">时间无限制</option>
+                      <option value="3">名下近 3 年有竣工业绩</option>
+                      <option value="5">名下近 5 年有竣工业绩</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* 数据总列表 */}
           <div className="text-secondary mb-3 small d-flex align-items-center justify-content-between">
@@ -1123,118 +1126,108 @@ function App() {
         // ==========================================
         <div>
           {/* 筛选面板 */}
-          <div className="card border-0 shadow-sm p-4 mb-4 bg-body-tertiary">
-            <h5 className="mb-3 text-secondary font-weight-bold small text-uppercase">
-              <i className="bi bi-funnel-fill me-1"></i> 多维度组合筛选器 (工程业绩)
-            </h5>
-            <div className="row g-3">
-              <div className="col-12 col-md-3">
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="搜索项目名称或经理姓名..."
-                  value={projSearch}
-                  onChange={(e) => setProjSearch(e.target.value)}
-                />
-              </div>
-              <div className="col-6 col-md-2">
-                <select
-                  className="form-select"
-                  value={projRole}
-                  onChange={(e) => setProjRole(e.target.value)}
-                >
-                  <option value="all">担任职位 (全部)</option>
-                  <option value="项目经理">项目经理</option>
-                  <option value="技术负责人">技术负责人</option>
-                </select>
-              </div>
-              <div className="col-6 col-md-2">
-                <select
-                  className="form-select"
-                  value={projRecord}
-                  onChange={(e) => setProjRecord(e.target.value)}
-                >
-                  <option value="all">四库平台 (全部)</option>
-                  <option value="已备案">已备案</option>
-                  <option value="无">未备案</option>
-                </select>
-              </div>
-              <div className="col-6 col-md-3">
-                <select
-                  className="form-select"
-                  value={projMgrStatus}
-                  onChange={(e) => setProjMgrStatus(e.target.value)}
-                >
-                  <option value="all">对应负责人状态 (全部)</option>
-                  <option value="idle">🟢 负责人当前空闲 (该业绩可用)</option>
-                  <option value="locked">🔴 负责人已被锁在别处 (该业绩不可用)</option>
-                </select>
-              </div>
-              <div className="col-6 col-md-2">
-                <button
-                  className="btn btn-outline-secondary w-100"
-                  onClick={() => {
-                    setProjSearch('');
-                    setProjRole('all');
-                    setProjRecord('all');
-                    setProjMgrStatus('all');
-                    setProjMinAmount('all');
-                    setProjMinArea('all');
-                    setProjTimeStatus('all');
-                  }}
-                >
-                  重置筛选
-                </button>
-              </div>
-            </div>
-            {/* 项目规模/时间过滤条件 */}
-            <div className="row g-3 mt-2 border-top pt-3">
-              <div className="col-6 col-md-4">
-                <div className="input-group">
-                  <span className="input-group-text bg-transparent text-muted small">单笔项目金额</span>
+          {/* 业绩高级多维筛选面板 (受 showAdvanced 控制展开) */}
+          {showAdvanced && (
+            <div className="card border-0 shadow-2xs p-3.5 mb-3 bg-body-tertiary rounded-3">
+              <div className="row g-2.5">
+                <div className="col-6 col-md-3">
                   <select
-                    className="form-select"
-                    value={projMinAmount}
-                    onChange={(e) => setProjMinAmount(e.target.value)}
+                    className="form-select form-select-sm"
+                    value={projRole}
+                    onChange={(e) => setProjRole(e.target.value)}
                   >
-                    <option value="all">全部金额</option>
-                    <option value="3000">&gt;= 3000 万元</option>
-                    <option value="5000">&gt;= 5000 万元</option>
-                    <option value="10000">&gt;= 1 亿元</option>
+                    <option value="all">担任职位 (全部)</option>
+                    <option value="项目经理">项目经理</option>
+                    <option value="技术负责人">技术负责人</option>
                   </select>
                 </div>
-              </div>
-              <div className="col-6 col-md-4">
-                <div className="input-group">
-                  <span className="input-group-text bg-transparent text-muted small">单笔项目面积</span>
+                <div className="col-6 col-md-3">
                   <select
-                    className="form-select"
-                    value={projMinArea}
-                    onChange={(e) => setProjMinArea(e.target.value)}
+                    className="form-select form-select-sm"
+                    value={projRecord}
+                    onChange={(e) => setProjRecord(e.target.value)}
                   >
-                    <option value="all">全部面积</option>
-                    <option value="10000">&gt;= 1 万㎡</option>
-                    <option value="30000">&gt;= 3 万㎡</option>
-                    <option value="50000">&gt;= 5 万㎡</option>
+                    <option value="all">四库平台 (全部)</option>
+                    <option value="已备案">已备案</option>
+                    <option value="无">未备案</option>
                   </select>
                 </div>
-              </div>
-              <div className="col-12 col-md-4">
-                <div className="input-group">
-                  <span className="input-group-text bg-transparent text-muted small">项目时间状态</span>
+                <div className="col-12 col-md-4">
                   <select
-                    className="form-select"
-                    value={projTimeStatus}
-                    onChange={(e) => setProjTimeStatus(e.target.value)}
+                    className="form-select form-select-sm"
+                    value={projMgrStatus}
+                    onChange={(e) => setProjMgrStatus(e.target.value)}
                   >
-                    <option value="all">全部状态</option>
-                    <option value="在建">在建中 / 至今</option>
-                    <option value="已竣工">已竣工项目</option>
+                    <option value="all">对应负责人状态 (全部)</option>
+                    <option value="idle">🟢 负责人当前空闲 (该业绩可用)</option>
+                    <option value="locked">🔴 负责人已被锁在别处 (该业绩不可用)</option>
                   </select>
+                </div>
+                <div className="col-12 col-md-2">
+                  <button
+                    className="btn btn-sm btn-outline-secondary w-100"
+                    onClick={() => {
+                      setProjSearch('');
+                      setProjRole('all');
+                      setProjRecord('all');
+                      setProjMgrStatus('all');
+                      setProjMinAmount('all');
+                      setProjMinArea('all');
+                      setProjTimeStatus('all');
+                    }}
+                  >
+                    重置筛选
+                  </button>
+                </div>
+              </div>
+              <div className="row g-2.5 mt-2 border-top pt-2.5">
+                <div className="col-6 col-md-4">
+                  <div className="input-group input-group-sm">
+                    <span className="input-group-text bg-transparent text-muted small fs-8">单笔项目金额</span>
+                    <select
+                      className="form-select"
+                      value={projMinAmount}
+                      onChange={(e) => setProjMinAmount(e.target.value)}
+                    >
+                      <option value="all">金额无限制</option>
+                      <option value="3000">&gt;= 3000 万元</option>
+                      <option value="5000">&gt;= 5000 万元</option>
+                      <option value="10000">&gt;= 1 亿元</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="col-6 col-md-4">
+                  <div className="input-group input-group-sm">
+                    <span className="input-group-text bg-transparent text-muted small fs-8">单笔项目面积</span>
+                    <select
+                      className="form-select"
+                      value={projMinArea}
+                      onChange={(e) => setProjMinArea(e.target.value)}
+                    >
+                      <option value="all">全部面积</option>
+                      <option value="10000">&gt;= 1 万㎡</option>
+                      <option value="30000">&gt;= 3 万㎡</option>
+                      <option value="50000">&gt;= 5 万㎡</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="col-12 col-md-4">
+                  <div className="input-group input-group-sm">
+                    <span className="input-group-text bg-transparent text-muted small fs-8">项目时间状态</span>
+                    <select
+                      className="form-select"
+                      value={projTimeStatus}
+                      onChange={(e) => setProjTimeStatus(e.target.value)}
+                    >
+                      <option value="all">全部状态</option>
+                      <option value="在建">在建中 / 至今</option>
+                      <option value="已竣工">已竣工项目</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* 项目展示列表 */}
           {(() => {
