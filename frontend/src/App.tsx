@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import './App.css';
 
 interface Manager {
@@ -79,6 +79,7 @@ function App() {
   // 视图切换: 'manager' (项目经理视图) | 'project' (project 视图)
   const [activeTab, setActiveTab] = useState<'manager' | 'project'>('manager');
   const [activeMenuManagerId, setActiveMenuManagerId] = useState<number | null>(null);
+  const [expandedManagerIds, setExpandedManagerIds] = useState<number[]>([]);
 
   // 数据列表状态
   const [managers, setManagers] = useState<Manager[]>([]);
@@ -919,7 +920,8 @@ function App() {
                   {filteredManagers.map((mgr) => {
                     const myProjects = projects.filter((p) => p.manager_name === mgr.name);
                     return (
-                      <tr key={mgr.id}>
+                      <Fragment key={mgr.id}>
+                        <tr>
                         <td className="py-2 position-relative">
                           <span 
                             className="badge text-white px-2.5 py-1.5 fs-7.5 font-weight-bold" 
@@ -1052,14 +1054,105 @@ function App() {
                           })()}
                         </td>
                         <td className="py-2 text-center">
-                          <span className="badge bg-light text-dark border fs-8">
-                            {myProjects.length} 项
+                          <span 
+                            className={`badge border fs-8 ${expandedManagerIds.includes(mgr.id) ? 'bg-primary text-white' : 'bg-light text-dark'}`}
+                            style={{ cursor: 'pointer', transition: 'all 0.15s', userSelect: 'none' }}
+                            onClick={() => {
+                              setExpandedManagerIds(prev => 
+                                prev.includes(mgr.id) ? prev.filter(id => id !== mgr.id) : [...prev, mgr.id]
+                              );
+                            }}
+                            title="点击展开/收起名下业绩项目"
+                          >
+                            {myProjects.length} 项 <i className={`bi bi-chevron-${expandedManagerIds.includes(mgr.id) ? 'up' : 'down'} ms-1`}></i>
                           </span>
                         </td>
                         <td className="py-2 small text-muted text-truncate" style={{ maxWidth: '250px' }} title={mgr.memo}>
                           {mgr.memo || '—'}
                         </td>
                       </tr>
+                      {expandedManagerIds.includes(mgr.id) && (
+                        <tr key={`expanded-${mgr.id}`} className="bg-light-subtle">
+                          <td colSpan={7} className="p-3 bg-light-subtle">
+                            <div className="card shadow-sm border border-light-subtle rounded p-3">
+                              <div className="d-flex justify-content-between align-items-center mb-3">
+                                <h6 className="mb-0 text-primary d-flex align-items-center small font-weight-bold">
+                                  <i className="bi bi-folder-fill me-2"></i>
+                                  {mgr.name} 的参建工程业绩项目列表
+                                </h6>
+                                <button 
+                                  type="button" 
+                                  className="btn btn-xs btn-outline-primary py-1 px-2.5 rounded-pill fs-8.5 d-flex align-items-center"
+                                  onClick={() => openAddProject(mgr.name)}
+                                >
+                                  <i className="bi bi-plus-lg me-1"></i>添加关联项目
+                                </button>
+                              </div>
+                              
+                              {myProjects.length === 0 ? (
+                                <p className="text-muted small mb-0 py-2 text-center">✍️ 暂无关联的工程业绩，点击右上角可快速新增关联。</p>
+                              ) : (
+                                <div className="table-responsive">
+                                  <table className="table table-sm table-hover table-bordered mb-0 align-middle bg-white fs-8.5">
+                                    <thead className="table-light">
+                                      <tr>
+                                        <th scope="col" className="py-2 px-2.5">项目名称</th>
+                                        <th scope="col" className="py-2 px-2.5" style={{ width: '100px' }}>担任角色</th>
+                                        <th scope="col" className="py-2 px-2.5" style={{ width: '100px' }}>建筑面积</th>
+                                        <th scope="col" className="py-2 px-2.5" style={{ width: '100px' }}>合同金额</th>
+                                        <th scope="col" className="py-2 px-2.5" style={{ width: '180px' }}>开竣工时间</th>
+                                        <th scope="col" className="py-2 px-2.5" style={{ width: '100px' }}>四库平台</th>
+                                        <th scope="col" className="py-2 px-2.5 text-center" style={{ width: '70px' }}>操作</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {myProjects.map((proj) => (
+                                        <tr key={proj.id}>
+                                          <td className="py-2 px-2.5 text-dark font-weight-bold">{proj.project_name}</td>
+                                          <td className="py-2 px-2.5">
+                                            <span 
+                                              className="badge rounded-circle d-inline-flex align-items-center justify-content-center text-white" 
+                                              style={{ 
+                                                width: '20px', 
+                                                height: '20px', 
+                                                backgroundColor: proj.role === '技术负责人' ? '#0ea5e9' : '#a855f7',
+                                                fontWeight: 'bold',
+                                                fontSize: '0.7rem'
+                                              }}
+                                            >
+                                              {proj.role === '技术负责人' ? '技' : '项'}
+                                            </span>
+                                          </td>
+                                          <td className="py-2 px-2.5 text-secondary">{proj.area || '—'}</td>
+                                          <td className="py-2 px-2.5 text-secondary">{proj.amount || '—'}</td>
+                                          <td className="py-2 px-2.5 text-secondary">{proj.duration || '—'}</td>
+                                          <td className="py-2 px-2.5">
+                                            <span className={`badge ${proj.record_status === '是' ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-secondary-subtle text-secondary border border-secondary-subtle'} fs-9`}>
+                                              {proj.record_status === '是' ? '已入库' : '未入库'}
+                                            </span>
+                                          </td>
+                                          <td className="py-2 px-2.5 text-center">
+                                            <button 
+                                              type="button" 
+                                              className="btn btn-outline-danger p-0.5 rounded-circle d-inline-flex align-items-center justify-content-center"
+                                              style={{ width: '22px', height: '22px' }}
+                                              onClick={() => handleDeleteProject(proj.id)}
+                                              title="删除该项目关联"
+                                            >
+                                              <i className="bi bi-trash-fill" style={{ fontSize: '0.65rem' }}></i>
+                                            </button>
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                      </Fragment>
                     );
                   })}
                 </tbody>
