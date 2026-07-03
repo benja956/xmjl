@@ -664,7 +664,7 @@ function App() {
                             <td className="py-1.5 px-2 text-muted">{proj.amount || '—'}</td>
                             <td className="py-1.5 px-2 text-muted">{proj.duration || '—'}</td>
                             <td className="py-1.5 px-2">
-                              <span className={`badge ${proj.record_status === '是' ? 'bg-success-subtle text-success border-0' : 'bg-secondary-subtle text-secondary border-0'} fs-9.5 px-1.5 py-0.5`}>
+                              <span className={`badge ${proj.record_status === '是' ? 'bg-success-subtle text-success border-0' : 'bg-secondary-subtle text-secondary border-0'} fs-95 px-1.5 py-0.5`}>
                                 {proj.record_status === '是' ? '已入库' : '未入库'}
                               </span>
                             </td>
@@ -871,19 +871,19 @@ function App() {
             一建注册项目经理业绩台账管理系统
           </h1>
           <div className="d-flex align-items-center gap-1.5 mt-1.5 flex-wrap">
-            <span className="badge bg-light text-secondary border px-2 py-1 fs-8.5 shadow-3xs">
+            <span className="badge bg-light text-secondary border px-2 py-1 fs-85 shadow-3xs">
               <i className="bi bi-people-fill text-primary me-1"></i>
               总人数: <strong className="text-dark">{stats.total_managers}</strong>人
             </span>
-            <span className="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 fs-8.5 shadow-3xs">
+            <span className="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 fs-85 shadow-3xs">
               <i className="bi bi-check-circle-fill text-success me-1"></i>
               空闲可投标: <strong className="text-success">{stats.idle_managers}</strong>人
             </span>
-            <span className="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 fs-8.5 shadow-3xs">
+            <span className="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 fs-85 shadow-3xs">
               <i className="bi bi-lock-fill text-danger me-1"></i>
               锁定中: <strong className="text-danger">{stats.locked_managers}</strong>人
             </span>
-            <span className="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-1 fs-8.5 shadow-3xs">
+            <span className="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-1 fs-85 shadow-3xs">
               <i className="bi bi-currency-yen text-warning-emphasis me-1"></i>
               总业绩: <strong className="text-warning-emphasis">{(stats.total_amount_万元 / 10000).toFixed(1)}</strong>亿元
             </span>
@@ -893,11 +893,11 @@ function App() {
           {loading && (
             <span className="spinner-border spinner-border-sm text-primary me-1" role="status"></span>
           )}
-          <span className="text-secondary small bg-body-tertiary p-1.5 px-2.5 rounded border fs-8.5">
+          <span className="text-secondary small bg-body-tertiary p-1.5 px-2.5 rounded border fs-85">
             <i className="bi bi-person-circle text-primary me-1"></i>
             <strong>{username}</strong>
           </span>
-          <button className="btn btn-xs btn-outline-danger d-flex align-items-center py-1.5 px-2.5 fs-8.5 rounded-pill" onClick={handleLogout}>
+          <button className="btn btn-xs btn-outline-danger d-flex align-items-center py-1.5 px-2.5 fs-85 rounded-pill" onClick={handleLogout}>
             <i className="bi bi-box-arrow-right me-1"></i> 退出
           </button>
         </div>
@@ -909,7 +909,7 @@ function App() {
         <div className="btn-group p-1 bg-body-secondary rounded-pill" style={{ width: 'fit-content' }}>
           <button
             type="button"
-            className={`btn btn-xs rounded-pill px-3 py-1.5 fs-8.5 font-weight-bold transition-all border-0 ${activeTab === 'manager' ? 'btn-white shadow-xs text-primary' : 'text-secondary bg-transparent'}`}
+            className={`btn btn-xs rounded-pill px-3 py-1.5 fs-85 font-weight-bold transition-all border-0 ${activeTab === 'manager' ? 'btn-white shadow-xs text-primary' : 'text-secondary bg-transparent'}`}
             onClick={() => {
               setActiveTab('manager');
               setShowAdvanced(false);
@@ -919,7 +919,7 @@ function App() {
           </button>
           <button
             type="button"
-            className={`btn btn-xs rounded-pill px-3 py-1.5 fs-8.5 font-weight-bold transition-all border-0 ${activeTab === 'project' ? 'btn-white shadow-xs text-primary' : 'text-secondary bg-transparent'}`}
+            className={`btn btn-xs rounded-pill px-3 py-1.5 fs-85 font-weight-bold transition-all border-0 ${activeTab === 'project' ? 'btn-white shadow-xs text-primary' : 'text-secondary bg-transparent'}`}
             onClick={() => {
               setActiveTab('project');
               setShowAdvanced(false);
@@ -957,18 +957,18 @@ function App() {
         <div className="d-flex align-items-center gap-2">
           <button
             type="button"
-            className={`btn btn-xs d-flex align-items-center py-1.5 px-3 rounded-pill fs-8.5 ${showAdvanced ? 'btn-primary text-white' : 'btn-outline-secondary'}`}
+            className={`btn btn-xs d-flex align-items-center py-1.5 px-3 rounded-pill fs-85 ${showAdvanced ? 'btn-primary text-white' : 'btn-outline-secondary'}`}
             onClick={() => setShowAdvanced(!showAdvanced)}
           >
             <i className="bi bi-funnel me-1"></i>
             高级筛选 {showAdvanced ? '收起 ▴' : '展开 ▾'}
           </button>
           {activeTab === 'manager' ? (
-            <button className="btn btn-xs btn-primary d-flex align-items-center py-1.5 px-3 rounded-pill fs-8.5" onClick={openAddManager}>
+            <button className="btn btn-xs btn-primary d-flex align-items-center py-1.5 px-3 rounded-pill fs-85" onClick={openAddManager}>
               <i className="bi bi-person-plus-fill me-1"></i> 新增人员
             </button>
           ) : (
-            <button className="btn btn-xs btn-primary d-flex align-items-center py-1.5 px-3 rounded-pill fs-8.5" onClick={() => openAddProject('')}>
+            <button className="btn btn-xs btn-primary d-flex align-items-center py-1.5 px-3 rounded-pill fs-85" onClick={() => openAddProject('')}>
               <i className="bi bi-plus-circle-fill me-1"></i> 新增业绩
             </button>
           )}
@@ -1103,7 +1103,7 @@ function App() {
             </div>
           ) : (
             <div className="table-responsive border shadow-sm rounded bg-body">
-              <table className="table table-striped table-hover align-middle mb-0">
+              <table className="table table-striped table-hover align-middle mb-0 fs-8">
                 <thead className="table-light">
                   <tr>
                     <th scope="col" className="py-2.5">姓名</th>
@@ -1354,7 +1354,7 @@ function App() {
                               </div>
 
                               <div className="table-responsive" style={{ maxHeight: '220px', overflowY: 'auto' }}>
-                                <table className="table table-sm table-borderless align-middle mb-0 text-white small" style={{ fontSize: '0.8rem' }}>
+                                <table className="table table-sm table-borderless align-middle mb-0 text-white fs-85">
                                   <thead>
                                     <tr className="border-bottom border-white border-opacity-10 text-white-50 fs-8">
                                       <th className="py-1">名字</th>

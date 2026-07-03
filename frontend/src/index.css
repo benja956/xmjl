@@ -31,3 +31,20 @@ body {
 .shadow-2xs {
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
 }
+
+/* 微型字号支持 */
+.fs-75 {
+  font-size: 0.78rem !important;
+}
+.fs-8 {
+  font-size: 0.75rem !important;
+}
+.fs-85 {
+  font-size: 0.72rem !important;
+}
+.fs-9 {
+  font-size: 0.68rem !important;
+}
+.fs-95 {
+  font-size: 0.64rem !important;
+}
