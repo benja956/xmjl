@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import './App.css';
 
 interface Manager {
@@ -497,15 +497,15 @@ function App() {
     );
   };
 
-  // 渲染扁平化的项目经理与项目组合表格 Body (一个项目占一行)
+  // 渲染一人一行的项目经理表格 Body (关联项目无折叠直接挂在下面)
   const renderFlatTableBody = () => {
-    return filteredManagers.flatMap((mgr) => {
+    return filteredManagers.map((mgr) => {
       const myProjects = projects.filter((p) => p.manager_name === mgr.name);
       
-      // 1. 无业绩项目的经理, 渲染单个空项目占位行
-      if (myProjects.length === 0) {
-        return [
-          <tr key={`mgr-${mgr.id}-empty`}>
+      return (
+        <Fragment key={mgr.id}>
+          {/* 人员基本信息行 */}
+          <tr>
             <td className="py-2 position-relative">
               <span 
                 className="badge text-white px-2.5 py-1.5 fs-7.5 font-weight-bold" 
@@ -575,10 +575,16 @@ function App() {
             <td className="py-2">
               <span 
                 className="badge rounded-circle d-inline-flex align-items-center justify-content-center text-white" 
-                style={{ width: '24px', height: '24px', backgroundColor: '#a855f7', fontWeight: 'bold', fontSize: '0.8rem' }}
-                title="项目经理"
+                style={{ 
+                  width: '24px', 
+                  height: '24px', 
+                  backgroundColor: myProjects.some((p) => p.role === '技术负责人') ? '#0ea5e9' : '#a855f7',
+                  fontWeight: 'bold',
+                  fontSize: '0.8rem'
+                }}
+                title={myProjects.some((p) => p.role === '技术负责人') ? '技术负责人' : '项目经理'}
               >
-                项
+                {myProjects.some((p) => p.role === '技术负责人') ? '技' : '项'}
               </span>
             </td>
             <td className="py-2">{renderCertMajorBadges(mgr.cert_major)}</td>
@@ -608,165 +614,96 @@ function App() {
                 return <span className="text-muted">—</span>;
               })()}
             </td>
-            <td className="py-2 small text-muted">—</td>
-            <td className="py-2 text-muted">—</td>
-            <td className="py-2 text-muted">—</td>
-            <td className="py-2 text-muted">—</td>
-            <td className="py-2 text-muted">—</td>
-            <td className="py-2 small text-muted text-truncate" style={{ maxWidth: '180px' }} title={mgr.memo}>
+            <td className="py-2">
+              <span className="badge bg-light text-dark border fs-8">
+                {myProjects.length} 项
+              </span>
+            </td>
+            <td className="py-2 small text-muted text-truncate" style={{ maxWidth: '250px' }} title={mgr.memo}>
               {mgr.memo || '—'}
             </td>
-            <td className="py-2 text-center text-muted">—</td>
           </tr>
-        ];
-      }
-      
-      // 2. 有项目业绩的经理, 每一笔项目业绩渲染单独的一行
-      return myProjects.map((proj) => (
-        <tr key={`mgr-${mgr.id}-proj-${proj.id}`}>
-          <td className="py-2 position-relative">
-            <span 
-              className="badge text-white px-2.5 py-1.5 fs-7.5 font-weight-bold" 
-              style={{ 
-                backgroundColor: mgr.status === 'idle' ? '#22c55e' : '#ef4444',
-                minWidth: '85px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                userSelect: 'none',
-                gap: '4px'
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                setActiveMenuManagerId(activeMenuManagerId === mgr.id ? null : mgr.id);
-              }}
-              title="点击展示操作菜单"
-            >
-              {mgr.name}
-              <i className="bi bi-caret-down-fill" style={{ fontSize: '0.65rem' }}></i>
-            </span>
 
-            {activeMenuManagerId === mgr.id && (
-              <div 
-                className="dropdown-menu show shadow-lg border position-absolute" 
-                style={{ zIndex: 1050, left: '12px', top: '38px', minWidth: '160px' }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <button 
-                  type="button" 
-                  className="dropdown-item py-2 d-flex align-items-center" 
-                  onClick={() => {
-                    openAddProject(mgr.name);
-                    setActiveMenuManagerId(null);
-                  }}
-                >
-                  <i className="bi bi-plus-circle text-primary me-2"></i>
-                  <span>增关联项目</span>
-                </button>
-                <button 
-                  type="button" 
-                  className="dropdown-item py-2 d-flex align-items-center" 
-                  onClick={() => {
-                    openEditManager(mgr);
-                    setActiveMenuManagerId(null);
-                  }}
-                >
-                  <i className="bi bi-pencil-square text-secondary me-2"></i>
-                  <span>修改基本信息</span>
-                </button>
-                <div className="dropdown-divider my-1"></div>
-                <button 
-                  type="button" 
-                  className="dropdown-item py-2 d-flex align-items-center text-danger" 
-                  onClick={() => {
-                    handleDeleteManager(mgr.id, mgr.name);
-                    setActiveMenuManagerId(null);
-                  }}
-                >
-                  <i className="bi bi-trash3-fill me-2"></i>
-                  <span>删除人员</span>
-                </button>
-              </div>
-            )}
-          </td>
-          <td className="py-2">
-            <span 
-              className="badge rounded-circle d-inline-flex align-items-center justify-content-center text-white" 
-              style={{ 
-                width: '24px', 
-                height: '24px', 
-                backgroundColor: proj.role === '技术负责人' ? '#0ea5e9' : '#a855f7',
-                fontWeight: 'bold',
-                fontSize: '0.8rem'
-              }}
-              title={proj.role || '项目经理'}
-            >
-              {proj.role === '技术负责人' ? '技' : '项'}
-            </span>
-          </td>
-          <td className="py-2">{renderCertMajorBadges(mgr.cert_major)}</td>
-          <td className="py-2 small text-secondary">{mgr.title ? `${mgr.title_major || '未填'} (${mgr.title})` : '—'}</td>
-          <td className="py-2">
-            {(() => {
-              const certLetter = mgr.safety_cert ? mgr.safety_cert.replace('证', '').trim().toUpperCase() : '';
-              if (certLetter === 'A' || certLetter === 'B' || certLetter === 'C') {
-                return (
-                  <span 
-                    className="badge rounded-circle d-inline-flex align-items-center justify-content-center border" 
-                    style={{ 
-                      width: '22px', 
-                      height: '22px', 
-                      backgroundColor: certLetter === 'A' ? '#fee2e2' : certLetter === 'B' ? '#dbeafe' : '#fef3c7',
-                      color: certLetter === 'A' ? '#991b1b' : certLetter === 'B' ? '#1e40af' : '#78350f',
-                      borderColor: certLetter === 'A' ? 'rgba(153, 27, 27, 0.2)' : certLetter === 'B' ? 'rgba(30, 64, 175, 0.2)' : 'rgba(120, 53, 15, 0.2)',
-                      fontWeight: 'bold',
-                      fontSize: '0.8rem'
-                    }}
-                    title={`安全生产考核合格 ${certLetter} 证`}
-                  >
-                    {certLetter}
-                  </span>
-                );
-              }
-              return <span className="text-muted">—</span>;
-            })()}
-          </td>
-          <td className="py-2 small text-dark font-weight-bold">{proj.project_name || '—'}</td>
-          <td className="py-2">
-            <span 
-              className={`badge rounded-pill fs-9 ${
-                proj.role === '技术负责人' 
-                  ? 'bg-info-subtle text-info border border-info-subtle' 
-                  : 'bg-primary-subtle text-primary border border-primary-subtle'
-              }`}
-            >
-              {proj.role || '项目经理'}
-            </span>
-          </td>
-          <td className="py-2 small text-secondary">{proj.amount || '—'}</td>
-          <td className="py-2 small text-secondary">{proj.duration || '—'}</td>
-          <td className="py-2">
-            <span className={`badge ${proj.record_status === '是' ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-secondary-subtle text-secondary border border-secondary-subtle'} fs-9`}>
-              {proj.record_status === '是' ? '已入库' : '未入库'}
-            </span>
-          </td>
-          <td className="py-2 small text-muted text-truncate" style={{ maxWidth: '180px' }} title={mgr.memo}>
-            {mgr.memo || '—'}
-          </td>
-          <td className="py-2 text-center">
-            <button 
-              type="button" 
-              className="btn btn-outline-danger p-0.5 rounded-circle d-inline-flex align-items-center justify-content-center"
-              style={{ width: '22px', height: '22px' }}
-              onClick={() => handleDeleteProject(proj.id)}
-              title="解除该项目关联"
-            >
-              <i className="bi bi-trash-fill" style={{ fontSize: '0.65rem' }}></i>
-            </button>
-          </td>
-        </tr>
-      ));
+          {/* 关联项目无折叠直接挂在下面 */}
+          {myProjects.length > 0 && (
+            <tr className="bg-light-subtle">
+              <td colSpan={7} className="p-3 bg-light-subtle">
+                <div className="card shadow-sm border border-light-subtle rounded p-3">
+                  <div className="d-flex justify-content-between align-items-center mb-3">
+                    <h6 className="mb-0 text-primary d-flex align-items-center small font-weight-bold">
+                      <i className="bi bi-folder-fill me-2"></i>
+                      {mgr.name} 的参建工程业绩项目列表
+                    </h6>
+                    <button 
+                      type="button" 
+                      className="btn btn-xs btn-outline-primary py-1 px-2.5 rounded-pill fs-8.5 d-flex align-items-center"
+                      onClick={() => openAddProject(mgr.name)}
+                    >
+                      <i className="bi bi-plus-lg me-1"></i>添加关联项目
+                    </button>
+                  </div>
+                  
+                  <div className="table-responsive">
+                    <table className="table table-sm table-hover table-bordered mb-0 align-middle bg-white fs-8.5">
+                      <thead className="table-light">
+                        <tr>
+                          <th scope="col" className="py-2 px-2.5">项目名称</th>
+                          <th scope="col" className="py-2 px-2.5" style={{ width: '100px' }}>担任角色</th>
+                          <th scope="col" className="py-2 px-2.5" style={{ width: '100px' }}>建筑面积</th>
+                          <th scope="col" className="py-2 px-2.5" style={{ width: '100px' }}>合同金额</th>
+                          <th scope="col" className="py-2 px-2.5" style={{ width: '180px' }}>开竣工时间</th>
+                          <th scope="col" className="py-2 px-2.5" style={{ width: '100px' }}>四库平台</th>
+                          <th scope="col" className="py-2 px-2.5 text-center" style={{ width: '70px' }}>操作</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {myProjects.map((proj) => (
+                          <tr key={proj.id}>
+                            <td className="py-2 px-2.5 text-dark font-weight-bold">{proj.project_name}</td>
+                            <td className="py-2 px-2.5">
+                              <span 
+                                className="badge rounded-circle d-inline-flex align-items-center justify-content-center text-white" 
+                                style={{ 
+                                  width: '20px', 
+                                  height: '20px', 
+                                  backgroundColor: proj.role === '技术负责人' ? '#0ea5e9' : '#a855f7',
+                                  fontWeight: 'bold',
+                                  fontSize: '0.7rem'
+                                }}
+                              >
+                                {proj.role === '技术负责人' ? '技' : '项'}
+                              </span>
+                            </td>
+                            <td className="py-2 px-2.5 text-secondary">{proj.area || '—'}</td>
+                            <td className="py-2 px-2.5 text-secondary">{proj.amount || '—'}</td>
+                            <td className="py-2 px-2.5 text-secondary">{proj.duration || '—'}</td>
+                            <td className="py-2 px-2.5">
+                              <span className={`badge ${proj.record_status === '是' ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-secondary-subtle text-secondary border border-secondary-subtle'} fs-9`}>
+                                {proj.record_status === '是' ? '已入库' : '未入库'}
+                              </span>
+                            </td>
+                            <td className="py-2 px-2.5 text-center">
+                              <button 
+                                type="button" 
+                                className="btn btn-outline-danger p-0.5 rounded-circle d-inline-flex align-items-center justify-content-center"
+                                style={{ width: '22px', height: '22px' }}
+                                onClick={() => handleDeleteProject(proj.id)}
+                                title="解除该项目关联"
+                              >
+                                <i className="bi bi-trash-fill" style={{ fontSize: '0.65rem' }}></i>
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          )}
+        </Fragment>
+      );
     });
   };
 
@@ -1180,18 +1117,13 @@ function App() {
               <table className="table table-striped table-hover align-middle mb-0">
                 <thead className="table-light">
                   <tr>
-                    <th scope="col" className="py-2.5" style={{ minWidth: '95px' }}>姓名</th>
-                    <th scope="col" className="py-2.5" style={{ minWidth: '85px' }}>人员类型</th>
-                    <th scope="col" className="py-2.5" style={{ minWidth: '100px' }}>注册专业</th>
+                    <th scope="col" className="py-2.5">姓名</th>
+                    <th scope="col" className="py-2.5">人员类型</th>
+                    <th scope="col" className="py-2.5">注册专业</th>
                     <th scope="col" className="py-2.5">职称专业</th>
-                    <th scope="col" className="py-2.5" style={{ minWidth: '60px' }}>安考</th>
-                    <th scope="col" className="py-2.5">业绩项目名称</th>
-                    <th scope="col" className="py-2.5" style={{ minWidth: '70px' }}>项目职责</th>
-                    <th scope="col" className="py-2.5" style={{ minWidth: '80px' }}>合同金额</th>
-                    <th scope="col" className="py-2.5" style={{ minWidth: '130px' }}>开竣工时间</th>
-                    <th scope="col" className="py-2.5" style={{ minWidth: '75px' }}>四库平台</th>
+                    <th scope="col" className="py-2.5">安考证书</th>
+                    <th scope="col" className="py-2.5 text-center">名下业绩</th>
                     <th scope="col" className="py-2.5">备注说明</th>
-                    <th scope="col" className="py-2.5 text-center" style={{ minWidth: '55px' }}>操作</th>
                   </tr>
                 </thead>
                 <tbody>
