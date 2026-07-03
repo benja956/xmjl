@@ -950,13 +950,41 @@ function App() {
                         <td className="py-2">{renderCertMajorBadges(mgr.cert_major)}</td>
                         <td className="py-2 small text-secondary">{mgr.title ? `${mgr.title_major || '未填'} (${mgr.title})` : '—'}</td>
                         <td className="py-2">
-                          {mgr.safety_cert && mgr.safety_cert !== '无' ? (
-                            <span className="badge bg-info-subtle text-info border border-info-subtle fs-8">
-                              安考 {mgr.safety_cert} 证
-                            </span>
-                          ) : (
-                            <span className="text-muted">—</span>
-                          )}
+                          {(() => {
+                            const certLetter = mgr.safety_cert ? mgr.safety_cert.replace('证', '').trim().toUpperCase() : '';
+                            if (certLetter === 'A' || certLetter === 'B' || certLetter === 'C') {
+                              return (
+                                <span 
+                                  className="badge rounded-circle d-inline-flex align-items-center justify-content-center border" 
+                                  style={{ 
+                                    width: '22px', 
+                                    height: '22px', 
+                                    backgroundColor: certLetter === 'A' 
+                                      ? '#fee2e2' // A证 - 淡红
+                                      : certLetter === 'B'
+                                      ? '#dbeafe' // B证 - 淡蓝
+                                      : '#fef3c7', // C证 - 淡黄
+                                    color: certLetter === 'A' 
+                                      ? '#991b1b' 
+                                      : certLetter === 'B'
+                                      ? '#1e40af' 
+                                      : '#78350f',
+                                    borderColor: certLetter === 'A' 
+                                      ? 'rgba(153, 27, 27, 0.2)' 
+                                      : certLetter === 'B'
+                                      ? 'rgba(30, 64, 175, 0.2)' 
+                                      : 'rgba(120, 53, 15, 0.2)',
+                                    fontWeight: 'bold',
+                                    fontSize: '0.8rem'
+                                  }}
+                                  title={`安全生产考核合格 ${certLetter} 证`}
+                                >
+                                  {certLetter}
+                                </span>
+                              );
+                            }
+                            return <span className="text-muted">—</span>;
+                          })()}
                         </td>
                         <td className="py-2 text-center">
                           <span className="badge bg-light text-dark border fs-8">

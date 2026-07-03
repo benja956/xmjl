@@ -3,7 +3,7 @@ DELETE FROM projects;
 DELETE FROM project_managers;
 
 
-INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('侯兴宝', '正高级工程师', '建筑工程2021.12.31', '一级建造师', '建筑工程市政公用工程', 'A', '1、技术负责人：肖宇峰');
+INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('侯兴宝', '正高级工程师', '建筑工程2021.12.31', '一级建造师', '建筑工程,市政公用工程', 'A', '1、技术负责人：肖宇峰');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('侯兴宝', '滁州经开区永阳路标准化厂房及宿舍等配套设施项目', '项目经理', '239334.53平方米', '138531万元', '2020.11.25—2022.11.10', '已备案', '', '', '', '');
 INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('齐贵军', '高级工程师', '无2010.8.1', '一级建造师', '建筑工程', 'B', '1、技术负责人：李建伟');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('齐贵军', '西部智谷综合楼', '项目经理', '20313.06平方米', '7086万元', '2020.6.13-2022.11.1', '已备案', '', '', '', '');
@@ -24,7 +24,7 @@ INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, s
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('刘陈勇', '资阳市全民健身活动中心建设项目', '项目经理', '11071.96平方米', '5673.6652万元', '2017.6.30-2019.4.19', '已备案', '', '', '', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('刘陈勇', '成都社会组织学院（二期）工程', '项目经理', '17311.36平方米', '8776万元', '2021.12.14-2023.11.27', '已备案', '', '', '', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('刘陈勇', '解放路智慧邻里中心项目', '项目经理', '44856.42平方米', '16561.2905万元', '在建', '已备案', '备案中', '项目经理', '2024-06-01', '2026-06-01');
-INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('刘昕', '高级工程师', '建筑工程2016.7.13', '一级建造师', '建筑工程市政公用工程', 'B', '成都市无法投标');
+INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('刘昕', '高级工程师', '建筑工程2016.7.13', '一级建造师', '建筑工程,市政公用工程', 'B', '成都市无法投标');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('刘昕', '未来之芯.科创生活中心（一期）施工', '项目经理', '59000平方米', '27761.1万元', '在建', '无', '', '', '', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('刘昕', '水城县以朵安置点2018年异地扶贫搬迁工程', '项目经理', '165978.38平方米', '42000万元', '2018.3.5-2020.4.1', '已备案', '', '', '', '');
 INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('唐丽', '高级工程师', '无2011.12.1', '一级建造师', '建筑工程', 'B', '1、西部钢构二期项目经理被锁，成都市无法投标');
@@ -35,13 +35,13 @@ INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, s
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('甘彬', '顺丰四川分拨中心产业园项目总承包工程', '项目经理', '159618.38平方米', '33335.9万元', '2020.4.3-2021.7.30', '已备案', '', '', '', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('甘彬', '新型电子元器件及集成电路生产项目', '项目经理', '/', '31617.3477万元', '2023.12.11-2025.2.25', '已备案', '', '', '', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('甘彬', '四川信息职业技术学院雪峰校区二期建设项目EPC', '项目经理', '49191.46平方米', '19260万元', '在建', '无', '备案中', '项目经理', '2025-08-01', '2026-08-01');
-INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('汪勇东', '高级工程师', '建筑工程', '一级建造师', '建筑工程市政公用工程', 'B', '1、南五线及滨湖路道路工程被锁，无法投成都市的标
+INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('汪勇东', '高级工程师', '建筑工程', '一级建造师', '建筑工程,市政公用工程', 'B', '1、南五线及滨湖路道路工程被锁，无法投成都市的标
 2、技术负责人：奉发明已辞职');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('汪勇东', '水城县陡箐镇安置点2017年易地扶贫搬迁工程', '项目经理', '25727平方米', '7116万元', '2017.6.23-2018.6.20', '无', '', '', '', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('汪勇东', '中央储备粮南宁直属库有限公司仓储项目一期施工', '技术负责人', '48927.37平方米', '36903万元', '在建', '无', '备案中', '技术负责人', '2025-12-01', '2027-08-01');
 INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('谢锋', '高级工程师', '建筑工程2020.12.31', '一级建造师', '建筑工程', 'B', '专业项目');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('谢锋', '高新福田TOD项目设计-施工总承包专业工程', '项目经理', '/', '29912.4337万元', '已完', '无', '', '', '', '');
-INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('姜友荣', '正高级工程师', '钢结构2021.12.15', '一级建造师', '建筑工程市政公用工程', 'B', '');
+INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('姜友荣', '正高级工程师', '钢结构2021.12.15', '一级建造师', '建筑工程,市政公用工程', 'B', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('姜友荣', '成都产业集团淮创智造园区标准化厂房项目', '技术负责人', '171075.1平方米', '38733.8万元', '2019.10.29-2021.6.28', '已备案', '', '', '', '');
 INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('蒋晓洪', '高级工程师', '建筑工程', '一级建造师', '市政公用工程', 'B', '项目暂停');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('蒋晓洪', '内江高新区滨江路、花陀路西段道路工程及城北片区生活污水管网工程', '项目经理', '/平方米', '11100万元', '在建', '无', '', '', '', '');
@@ -50,14 +50,14 @@ INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, s
 职称F：高级工程师（建筑工程）');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('邓厚雄', '宜宾市新能源汽车及零部件配套产业园基础设施一期', '项目经理', '303163.96平方米', '170000万元', '2018.3.25—2020.9.29', '已备案', '', '', '', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('邓厚雄', '民航科技创新示范区一期工程B-02地块钢结构及金属屋面暂估价工程', '项目经理', '/平方米', '20328.042639万元', '在建', '无', '备案中', '项目经理', '2024-05-01', '2026-02-01');
-INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('何天友', '高级工程师', '建筑机械', '一级建造师', '建筑工程市政公用工程', 'B', '项目经理：孟鹤飞');
+INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('何天友', '高级工程师', '建筑机械', '一级建造师', '建筑工程,市政公用工程', 'B', '项目经理：孟鹤飞');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('何天友', '简阳市现代物流基地及配套基础设施建设项目50#、51#地块工程', '技术负责人', '177862.91平方米', '129074万元', '在建', '已备案', '备案中', '技术负责人', '2025-01-01', '2028-01-01');
 INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('杨德海', '高级工程师', '建筑工程2021.12.31', '一级建造师', '建筑工程', 'B', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('杨德海', '宜宾市新能源汽车及零部件配套产业园基础设施一期', '技术负责人', '303163.96平方米', '170000万元', '2018.3.25—2020.9.29', '已备案', '', '', '', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('杨德海', '成渝客运专线（高新区段）安置还房一期工程合同', '项目经理', '91806.82平方米', '27680万元', '2020.12.30-2023.11.27', '已备案', '', '', '', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('杨德海', '内江高新区农业科技产业园区项目（10#地块）', '项目经理', '79080.94平方米', '35208万元', '在建', '已备案', '备案中', '项目经理', '2023-03-01', '2026-05-01');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('杨德海', '民航科技创新示范区一期工程B-02地块钢结构及金属屋面暂估价工程', '技术负责人', '', '20328.042639万元', '在建', '无', '备案中', '技术负责人', '2024-05-01', '2026-02-01');
-INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('曾强', '工程师', '市政工程', '一级建造师', '建筑工程市政公用工程', 'B', '1、技术负责人：贾敏');
+INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('曾强', '工程师', '市政工程', '一级建造师', '建筑工程,市政公用工程', 'B', '1、技术负责人：贾敏');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('曾强', '蜀龙路跨线桥', '项目经理', '/平方米', '4069万元', '2022.11.15-2023.11.7', '已备案', '', '', '', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('曾强', '宜宾汽车零部件配套产业园一期项目（EPC总包）', '技术负责人', '59518.72平方米', '约20000万元', '2019.12.7-2022.3.3', '无', '', '', '', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('曾强', '成渝双圈内江经开区城乡冷链物流设施项目-G-4-7 地块土石方平场项目', '项目经理', '/平方米', '3083万元', '在建', '无', '备案中', '项目经理', '2024-12-01', '2026-03-01');
@@ -65,13 +65,13 @@ INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, s
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('王泓杰', '内江高新区滨江路、花陀路西段道路工程及城北片区生活污水管网工程', '技术负责人', '/平方米', '11100万元', '在建', '无', '', '', '', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('王泓杰', '宜宾汽车零部件配套产业园一期项目（EPC总包）', '项目经理', '54634平方米', '约12000万元', '2021.3-2024.6.4', '无', '', '', '', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('王泓杰', '白马专业厂房1号、白马专业厂房2号、内江高新区门庭九路道路工程', '项目经理', '239547.11平方米', '84576.586万元', '在建', '分块备案', '备案中', '项目经理', '2024-06-01', '2027-02-01');
-INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('曾维金', '工程师', '建筑工程', '一级建造师', '建筑工程市政公用工程', 'B', '');
+INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('曾维金', '工程师', '建筑工程', '一级建造师', '建筑工程,市政公用工程', 'B', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('曾维金', '中储棉四川有限责任公司仓储物流', '项目经理', '5200平方米', '1295.890963万元', '2020.12.12-2021.9.13', '已备案', '', '', '', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('曾维金', '云南高端数控（YXYH（2022）1号地块）工程总承包（EPC）', '项目经理', '33949平方米', '9413.6万元', '已完', '已备案', '', '', '', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('曾维金', '中冶西部钢构有限公司钢结构制造及装配生产项目', '项目经理', '36130平方米', '28309.3028万元', '在建', '无', '', '', '', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('曾维金', '达州磷石膏资源循环利用项目', '项目经理', '35000平方米', '8231万元', '在建', '无', '备案中', '项目经理', '2026-03-01', '2028-02-01');
 INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('郑俊超', '高级工程师', '安全工程', '一级建造师', '建筑工程', 'C', '');
-INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('罗彬', '高级工程师', '建筑工程', '一级建造师', '建筑工程市政公用工程', 'B', '');
+INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('罗彬', '高级工程师', '建筑工程', '一级建造师', '建筑工程,市政公用工程', 'B', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('罗彬', '解放路智慧邻里中心项目', '技术负责人', '44856.42平方米', '16561.2905万元', '在建', '已备案', '备案中', '技术负责人', '2024-06-01', '2026-06-01');
 INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('李国明', '高级工程师', '建筑工程2018.12.31', '一级建造师', '建筑工程', 'B', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('李国明', '内江高新区高新集成智能模块产业园', '技术负责人', '86019.46平方米', '29821万元', '在建', '已备案', '备案中', '技术负责人', '2025-06-01', '2028-04-01');
@@ -81,7 +81,7 @@ INSERT INTO projects (manager_name, project_name, role, area, amount, duration, 
 4、开竣工日期：2020.6.4-2022.3.30', '', '已备案', '', '', '', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('唐健', '兴乐综合实践基地项目', '项目经理', '24789.20平方米', '13226.210918万元', '2022.12.23-2023.7.17', '已备案', '', '', '', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('唐健', '天府新区数字经济近零碳产业园区近零碳交通示范项目-红线外梓州大道上方大平台', '项目经理', '24789.20平方米', '36763.35502万元', '在建', '已备案', '备案中', '项目经理', '2023-12-01', '2026-06-01');
-INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('陈伟', '高级工程师', '建筑工程', '一级建造师', '建筑工程市政公用工程', 'B', '');
+INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('陈伟', '高级工程师', '建筑工程', '一级建造师', '建筑工程,市政公用工程', 'B', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('陈伟', '成渝客运专线（高新区段）安置还房一期工程合同', '技术负责人', '91806.82平方米', '27680万元', '2020.12.30-2023.11.27', '已备案', '', '', '', '');
 INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('陈涯', '工程师', '工民建', '一级建造师', '建筑工程', 'B', '1、技术负责人：李佳');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('陈涯', '雅安市名山区茶叶现代农业产业园区建设项目(一期)', '项目经理', '26712.05平方米', '14948万元', '2022.5.27-2023.5.26', '已备案', '', '', '', '');
@@ -90,14 +90,14 @@ INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, s
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('刘伟', '长江上游区域大数据中心暨宜宾市大数据产业园项目（二期）设计施工总承包', '项目经理', '86306平方米', '50000万元', '2021.6.23-2023.11.14', '已备案', '', '', '', '');
 INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('郭建', '工程师', '无', '一级建造师', '建筑工程', 'B', '无竣工验收报告');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('郭建', '云南高端数控（YXYH（2022）1号地块）工程总承包（EPC）', '技术负责人', '33949平方米', '9413.6万元', '在建', '已备案', '', '', '', '');
-INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('谢慧智', '工程师', '建筑工程', '一级建造师', '建筑工程市政公用工程', 'B', '1、技术负责人：曾志强');
+INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('谢慧智', '工程师', '建筑工程', '一级建造师', '建筑工程,市政公用工程', 'B', '1、技术负责人：曾志强');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('谢慧智', '宜宾汽车零部件配套产业园一期项目（EPC总包）', '项目经理', '59518.72平方米', '约20000万元', '2019.12.7-2022.3.3', '无', '', '', '', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('谢慧智', '永川综合保税区建设工程项目二期（第一批建设项目）EPC总承包', '项目经理', '16.4万平方米', '66532.1607万元', '2023.11.6-2025.12.17', '已备案', '', '', '', '');
-INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('王效', '工程师', '无', '一级建造师', '建筑工程市政公用工程', 'B', '');
+INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('王效', '工程师', '无', '一级建造师', '建筑工程,市政公用工程', 'B', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('王效', '成都纺织高等专科学校综合实训基地项目', '项目经理', '22920.93平方米', '4146万元', '2025.2.12-2025.6.16', '已备案', '', '', '', '');
 INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('张大林', '高级工程师', '建筑工程2021.12.31', '一级建造师', '建筑工程', 'B', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('张大林', '天府新区数字经济近零碳产业园区近零碳交通示范项目-红线外梓州大道上方大平台', '技术负责人', '24789.20平方米', '36763.35502万元', '在建', '已备案', '备案中', '技术负责人', '2023-12-01', '2026-06-01');
-INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('宋微', '工程师', '建筑工程', '一级建造师', '建筑工程市政公用工程', 'B', '');
+INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('宋微', '工程师', '建筑工程', '一级建造师', '建筑工程,市政公用工程', 'B', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('宋微', '顺丰四川分拨中心产业园项目总承包工程', '技术负责人', '159618.38平方米', '33335.9万元', '202.4.3-2021.7.30', '已备案', '', '', '', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('宋微', '未来之芯.科创生活中心（一期）施工', '技术负责人', '59000平方米', '27761.1万元', '在建', '无', '', '', '', '');
 INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('赵淦', '工程师', '建筑工程', '一级建造师', '建筑工程', 'B', '市政公司实施');
@@ -112,13 +112,13 @@ INSERT INTO projects (manager_name, project_name, role, area, amount, duration, 
 INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('林巍', '工程师', '无', '一级建造师', '建筑工程', 'B', '1、技术负责人：卫东坡');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('林巍', '成都旭光电子股份有限公司电子陶瓷材料制造项目', '项目经理', '17891.48平方米', '5234.0887万元', '2021.12.27-2022.10.27', '已备案', '', '', '', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('林巍', '内江国家级高新技术产业园区基础配套设施建设项目(一期)-邻里中心', '项目经理', '64772.97平方米', '26821万元', '在建', '已备案', '备案中', '项目经理', '2023-07-01', '2026-07-01');
-INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('黄友坤', '工程师', '无', '一级建造师', '建筑工程市政公用工程', 'B', '');
+INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('黄友坤', '工程师', '无', '一级建造师', '建筑工程,市政公用工程', 'B', '');
 INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('李卓哲', '高级工程师', '工民建2019.6.26', '一级建造师', '建筑工程', 'B', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('李卓哲', '长江上游区域大数据中心暨宜宾市大数据产业园项目（二期）设计施工总承包', '技术负责人', '86306平方米', '50000万元', '2021.6.23-2023.11.14', '已备案', '', '', '', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('李卓哲', '乐山市峨眉一中建设项目（高中）', '项目经理', '15500平方米', '3825万元', '在建', '无', '备案中', '项目经理', '2025-08-01', '2027-08-01');
 INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('张京', '工程师', '建筑工程', '一级建造师', '建筑工程', 'B', '1、技术负责人：余波');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('张京', '武资生态体育公园', '项目经理', '13136.2平方米', '7061万元', '2020.11.25-2022.8.10', '已备案', '', '', '', '');
-INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('贾敏', '工程师', '市政工程', '一级建造师', '建筑工程市政公用工程', 'B', '');
+INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('贾敏', '工程师', '市政工程', '一级建造师', '建筑工程,市政公用工程', 'B', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('贾敏', '蜀龙路跨线桥', '技术负责人', '/平方米', '4069万元', '2022.11.15-2023.11.7', '已备案', '', '', '', '');
 INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('肖磊', '工程师', '桥梁工程', '一级建造师', '市政公用工程', 'B', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('肖磊', '高新西区天彩路南延线跨清水河及滨河路慢行桥', '技术负责人', '/平方米', '3830万元', '在建', '无', '备案中', '技术负责人', '2024-05-01', '2026-08-01');
@@ -129,21 +129,20 @@ INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, s
 INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('应华兵', '工程师', '道路与桥梁工程', '一级建造师', '建筑工程', 'B', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('应华兵', '成都社会组织学院（二期）工程', '技术负责人', '17311.36平方米', '8776万元', '2021.12.14-2023.11.27', '已备案', '', '', '', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('应华兵', '中冶西部钢构有限公司钢结构制造及装配生产项目', '技术负责人', '36130平方米', '28309.3028万元', '在建', '无', '', '', '', '');
-INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('崔洪齐', '工程师', '市政工程', '一级建造师', '市政公用工程公路工程', 'B', '');
+INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('崔洪齐', '工程师', '市政工程', '一级建造师', '市政公用工程,公路工程', 'B', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('崔洪齐', '永川综合保税区建设工程项目二期（第一批建设项目）EPC总承包', '技术负责人', '16.4万平方米', '66532.1607万元', '2023.11.6-2025.12.17', '已备案', '', '', '', '');
-INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('胡周凡', '工程师', '建筑工程', '一级建造师', '公路工程建筑工程', 'B', '');
+INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('胡周凡', '工程师', '建筑工程', '一级建造师', '公路工程,建筑工程', 'B', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('胡周凡', '内江高新区白马电子信息产业园区配套设施建设项目配套商业', '技术负责人', '81106.71平方米', '28557.3万元', '2023.9.20-2025.11.11', '已备案', '', '', '', '');
 INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('杨浩', '工程师', '钢结构工程', '一级建造师', '建筑工程', 'B', '');
 INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('刘祥伟', '工程师', '房屋建筑', '一级建造师', '市政公用工程', 'B', '');
-INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('刘飞', '工程师', '建筑工程', '一级建造师', '建筑工程市政公用工程', 'B', '1、技术负责人：李冬翌');
+INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('刘飞', '工程师', '建筑工程', '一级建造师', '建筑工程,市政公用工程', 'B', '1、技术负责人：李冬翌');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('刘飞', '内江高新区白马电子信息产业园区配套设施建设项目（标准化厂房）', '项目经理', '59486.87平方米', '16666.5万元', '2023.7.4-2025.4.15', '已备案', '', '', '', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('刘飞', '中央储备粮广安直属库有限公司粮食仓储物流项目施工/标段', '技术负责人', '9805平方米', '9969.1124万元', '2022.5.6-2023.9.22', '已备案', '', '', '', '');
 INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('高俊', '高级工程师', '机电工程2020.12.31', '一级建造师', '机电工程', 'B', '');
 INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('王璞', '高级工程师', '建筑工程2020.12.31', '一级建造师', '建筑工程', 'B', '');
 INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('万志鹏', '工程师', '市政工程', '一级建造师', '市政公用工程', 'B', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('万志鹏', '简阳市凉水、万古、新阳社区综合整治及配套基础设施建设项目建设工程', '技术负责人', '/平方米', '64762万元', '在建', '无', '备案中', '技术负责人', '', '');
-INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('郑佳宇', '经济师', '建筑经济', '一级建造师', '市政公用工程
-水利水电工程', 'B', '借八公司');
+INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('郑佳宇', '经济师', '建筑经济', '一级建造师', '市政公用工程,水利水电工程', 'B', '借八公司');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('郑佳宇', '达川区三明片区老旧供水管网更新改造项目施工施工一', '项目经理', '81106.71平方米', '4434万元', '在建', '无', '备案中', '项目经理', '2026-01-01', '2027-08-01');
 INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('雷金玉', '工程师', '建筑工程', '一级建造师', '建筑工程', 'B', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('雷金玉', '内江高新区白马电子信息产业园区配套设施建设项目配套商业', '项目经理', '81106.71平方米', '28557.3万元', '2023.9.20-2025.11.11', '已备案', '', '', '', '');
@@ -158,7 +157,7 @@ INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, s
 INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('卢建勇', '高级工程师', '工程造价2021.5.13', '一级建造师', '机电工程', 'B', '');
 INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('李红飞', '工程师', '工民建', '一级建造师', '水利水电', 'B', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('李红飞', '成都天府国际空港新城绛溪南组团片区兴隆分干渠迁改工程', '项目经理', '/平方米', '3075.51万元', '2024.2-2025.7.20', '无', '', '', '', '');
-INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('唐磊', '工程师', '无', '一级建造师', '建筑工程市政公用工程', 'B', '');
+INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('唐磊', '工程师', '无', '一级建造师', '建筑工程,市政公用工程', 'B', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('唐磊', '高新西区天彩路南延线跨清水河及滨河路慢行桥', '项目经理', '/平方米', '3830万元', '在建', '无', '备案中', '项目经理', '2024-05-01', '2026-08-01');
 INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('王铭轩', '工程师', '建筑工程', '一级建造师', '建筑工程', 'B', '1、技术负责人：罗杰');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('王铭轩', '简阳1.18火灾受损房屋加固改造项目', '项目经理', '4255.55平方米', '570.7445万元', '在建', '无', '备案中', '项目经理', '2024-09-01', '2026-03-01');
@@ -166,7 +165,7 @@ INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, s
 INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('刘仁初', '工程师', '市政工程（道路和桥梁）', '一级建造师', '建筑工程', 'B', '');
 INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('罗兵', '工程师', '房屋建筑', '一级建造师', '建筑工程', 'B', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('罗兵', '内江高新区高新集成智能模块产业园', '项目经理', '86019.46平方米', '29821万元', '在建', '已备案', '备案中', '项目经理', '2025-06-01', '2028-04-01');
-INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('蒋兴伟', '工程师', '建筑工程', '一级建造师', '建筑工程市政公用工程', 'B', '');
+INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('蒋兴伟', '工程师', '建筑工程', '一级建造师', '建筑工程,市政公用工程', 'B', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('蒋兴伟', '简阳市凉水、万古、新阳社区综合整治及配套基础设施建设项目建设工程', '项目经理', '/平方米', '64762万元', '在建', '无', '备案中', '项目经理', '', '');
 INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('陈鹏', '工程师', '无', '一级建造师', '建筑工程', 'B', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('陈鹏', '乐山市峨眉一中建设项目（高中）', '技术负责人', '15500平方米', '3825万元', '在建', '无', '备案中', '技术负责人', '2025-08-01', '2027-08-01');
@@ -178,7 +177,7 @@ INSERT INTO projects (manager_name, project_name, role, area, amount, duration, 
 INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('赵家斌', '工程师', '建筑工程管理', '一级建造师', '建筑工程', 'B', '');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('赵家斌', '达州磷石膏资源循环利用项目', '技术负责人', '35000平方米', '8231万元', '在建', '无', '备案中', '技术负责人', '2026-03-01', '2028-02-01');
 INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('叶长春', '无', '', '一级建造师', '建筑工程', 'B', '');
-INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('郭合有', '高级工程师', '建筑工程2021.12.30', '一级建造师', '建筑工程市政公用工程', 'B', '1、10#地块还未竣工
+INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('郭合有', '高级工程师', '建筑工程2021.12.30', '一级建造师', '建筑工程,市政公用工程', 'B', '1、10#地块还未竣工
 2、技术负责人：卢恒军');
 INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES ('郭合有', '内江高新区农业科技产业园区项目（3#地块）', '项目经理', '99091.95平方米', '44146万元', '2023.3.17-2024.12.20', '已备案', '', '', '', '');
 INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('杨东林', '工程师', '土木工程', '一级建造师', '建筑工程', 'B', '1、内江邻里中心挂技术负责人');
@@ -197,7 +196,7 @@ INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, s
 INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('陈信霖', '工程师', '', '', '建筑工程', 'B', '');
 INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('文腾', '工程师', '', '', '建筑工程', 'B', '');
 INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('冯亚莉', '工程师', '', '', '建筑工程', 'B', '');
-INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('龚云学', '工程师', '', '', '建筑工程机电公司', 'B', '');
+INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('龚云学', '工程师', '', '', '建筑工程,机电公司', 'B', '');
 INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('许超', '高级工程师', '建筑工程', '', '建筑工程', 'B', '');
 INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('王开军', '工程师', '', '', '建筑工程', 'B', '');
 INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES ('黄珊', '高级工程师', '建筑工程', '一级建造师', '建筑工程', 'B', '');
