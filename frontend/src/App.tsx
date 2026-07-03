@@ -428,6 +428,65 @@ function App() {
     return parts.length > 0 ? parts.join('/') : '—';
   };
 
+  // 渲染注册专业字标方块（如：建筑工程->建，支持多专业并排）
+  const renderCertMajorBadges = (certMajor: string | null) => {
+    if (!certMajor) return <span className="text-muted">—</span>;
+    const majors = certMajor.split(/[,,;；\s\n]+/).map(s => s.trim()).filter(Boolean);
+    if (majors.length === 0) return <span className="text-muted">—</span>;
+
+    return (
+      <div className="d-flex flex-wrap gap-1">
+        {majors.map((m, idx) => {
+          let char = m.slice(0, 1);
+          let bgColor = '#f1f5f9';
+          let textColor = '#475569';
+          
+          if (m.includes('建筑')) {
+            char = '建';
+            bgColor = '#fef9c3'; 
+            textColor = '#854d0e';
+          } else if (m.includes('市政')) {
+            char = '市';
+            bgColor = '#ffedd5'; 
+            textColor = '#c2410c';
+          } else if (m.includes('机电')) {
+            char = '机';
+            bgColor = '#dbeafe'; 
+            textColor = '#1e40af';
+          } else if (m.includes('公路')) {
+            char = '公';
+            bgColor = '#d1fae5'; 
+            textColor = '#065f46';
+          } else if (m.includes('水利')) {
+            char = '水';
+            bgColor = '#e0f2fe'; 
+            textColor = '#0369a1';
+          }
+          
+          return (
+            <span 
+              key={idx} 
+              className="badge d-inline-flex align-items-center justify-content-center border"
+              style={{ 
+                backgroundColor: bgColor, 
+                color: textColor, 
+                borderColor: 'rgba(0,0,0,0.06)',
+                fontSize: '0.75rem',
+                padding: '0.15rem 0.3rem',
+                minWidth: '20px',
+                height: '20px',
+                fontWeight: 'bold'
+              }}
+              title={m}
+            >
+              {char}
+            </span>
+          );
+        })}
+      </div>
+    );
+  };
+
   // ==========================================
   // 提取数字工具函数 (用于前端规模过滤)
   // ==========================================
@@ -888,7 +947,7 @@ function App() {
                               : '项'}
                           </span>
                         </td>
-                        <td className="py-2 small font-weight-bold text-dark">{mgr.cert_major || '—'}</td>
+                        <td className="py-2">{renderCertMajorBadges(mgr.cert_major)}</td>
                         <td className="py-2 small text-secondary">{mgr.title ? `${mgr.title_major || '未填'} (${mgr.title})` : '—'}</td>
                         <td className="py-2">
                           {mgr.safety_cert && mgr.safety_cert !== '无' ? (
