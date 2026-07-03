@@ -837,123 +837,125 @@ function App() {
             <div className="row g-3">
               {filteredManagers.map((mgr) => {
                 return (
-                  <div key={mgr.id} className="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
-                    {/* 现代暗黑科技感大卡片 */}
-                    <div className="card h-100 border-0 text-white p-3.5 position-relative overflow-hidden shadow-sm"
+                  <div key={mgr.id} className="col-12 mb-2.5">
+                    {/* 现代暗黑科技感横向扁长条卡片 */}
+                    <div className="card border-0 text-white p-3 shadow-sm position-relative overflow-hidden"
                          style={{ 
-                           background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+                           background: 'linear-gradient(90deg, #1e293b 0%, #0f172a 100%)',
                            border: '1px solid rgba(255, 255, 255, 0.05)',
-                           borderRadius: '1rem',
-                           minHeight: '210px'
+                           borderRadius: '0.75rem',
                          }}>
-                      
-                      {/* 右上角操作气泡按钮 (隐入背景，精细雅致) */}
-                      <div className="position-absolute top-0 end-0 m-3 d-flex gap-2">
-                        <button 
-                          type="button" 
-                          className="btn btn-xs rounded-circle d-flex align-items-center justify-content-center border-0 p-1.5" 
-                          style={{ backgroundColor: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', width: '28px', height: '28px' }} 
-                          onClick={() => openAddProject(mgr.name)}
-                          title="为该人员添加项目业绩"
-                        >
-                          <i className="bi bi-plus-lg fs-8"></i>
-                        </button>
-                        <button 
-                          type="button" 
-                          className="btn btn-xs rounded-circle d-flex align-items-center justify-content-center border-0 p-1.5" 
-                          style={{ backgroundColor: 'rgba(255, 255, 255, 0.06)', color: '#94a3b8', width: '28px', height: '28px' }} 
-                          onClick={() => openEditManager(mgr)}
-                          title="编辑基本信息"
-                        >
-                          <i className="bi bi-pencil-fill fs-8"></i>
-                        </button>
-                        <button 
-                          type="button" 
-                          className="btn btn-xs rounded-circle d-flex align-items-center justify-content-center border-0 p-1.5" 
-                          style={{ backgroundColor: 'rgba(239, 68, 68, 0.15)', color: '#f87171', width: '28px', height: '28px' }} 
-                          onClick={() => handleDeleteManager(mgr.id, mgr.name)}
-                          title="删除人员"
-                        >
-                          <i className="bi bi-trash3-fill fs-8"></i>
-                        </button>
-                      </div>
-
-                      {/* 卡片头部：姓名 & 状态 */}
-                      <div className="d-flex align-items-center gap-2.5 mb-3">
-                        <h4 className="mb-0 font-weight-bold tracking-wide" style={{ color: '#f8fafc', fontSize: '1.2rem' }}>
-                          {mgr.name}
-                        </h4>
-                        <span 
-                          className="badge px-2.5 py-1 rounded-pill font-weight-bold d-inline-flex align-items-center gap-1.5 fs-8" 
-                          style={mgr.status === 'idle' 
-                            ? { backgroundColor: 'rgba(34, 197, 94, 0.15)', color: '#4ade80', border: '1px solid rgba(74, 222, 128, 0.2)' } 
-                            : { backgroundColor: 'rgba(239, 68, 68, 0.15)', color: '#f87171', border: '1px solid rgba(248, 113, 113, 0.2)' }}
-                        >
-                          <span 
-                            className="rounded-circle" 
-                            style={{ 
-                              width: '6px', 
-                              height: '6px', 
-                              backgroundColor: mgr.status === 'idle' ? '#22c55e' : '#ef4444',
-                              boxShadow: mgr.status === 'idle' ? '0 0 8px #22c55e' : '0 0 8px #ef4444'
-                            }}
-                          ></span>
-                          {mgr.status === 'idle' ? '🟢 可投标' : '🔴 已锁定'}
-                        </span>
-                      </div>
-
-                      {/* 核心证书信息网格 */}
-                      <div className="d-flex flex-column gap-2 mb-3">
-                        {/* 注册专业 */}
-                        {mgr.cert_major ? (
-                          <div className="d-flex align-items-start gap-2 fs-8.5 text-slate-300">
-                            <i className="bi bi-file-earmark-badge text-info mt-0.5"></i>
-                            <div>
-                              <strong className="text-white-50">{mgr.cert_name || '注册证书'}: </strong>
-                              <span className="font-weight-bold" style={{ color: '#e2e8f0' }}>{mgr.cert_major}</span>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="d-flex align-items-center gap-2 fs-8.5 text-muted">
-                            <i className="bi bi-file-earmark-badge mt-0.5"></i>
-                            <span>未登记注册专业</span>
-                          </div>
-                        )}
-
-                        {/* 技术职称 */}
-                        {mgr.title && (
-                          <div className="d-flex align-items-start gap-2 fs-8.5 text-slate-300">
-                            <i className="bi bi-award text-warning mt-0.5"></i>
-                            <div>
-                              <strong className="text-white-50">职称专业: </strong>
-                              <span style={{ color: '#cbd5e1' }}>{mgr.title_major || '未填'} ({mgr.title})</span>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* 安考证与其它标签 (以极简药丸展示) */}
-                        <div className="d-flex flex-wrap gap-1.5 mt-1">
-                          {mgr.safety_cert && mgr.safety_cert !== '无' && (
-                            <span className="badge px-2 py-1 rounded fs-8" 
-                                  style={{ backgroundColor: 'rgba(14, 165, 233, 0.1)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.15)' }}>
-                              安考 {mgr.safety_cert} 证
+                      <div className="row g-2 align-items-center">
+                        
+                        {/* 1. 姓名与状态 (占 3 个栅格) */}
+                        <div className="col-12 col-md-3 border-end border-white border-opacity-5">
+                          <div className="d-flex align-items-center gap-3">
+                            <h4 className="mb-0 font-weight-bold tracking-wide text-truncate" style={{ color: '#f8fafc', fontSize: '1.2rem', maxWidth: '140px' }} title={mgr.name}>
+                              {mgr.name}
+                            </h4>
+                            <span 
+                              className="badge px-2.5 py-1 rounded-pill font-weight-bold d-inline-flex align-items-center gap-1.5 fs-8" 
+                              style={mgr.status === 'idle' 
+                                ? { backgroundColor: 'rgba(34, 197, 94, 0.15)', color: '#4ade80', border: '1px solid rgba(74, 222, 128, 0.2)' } 
+                                : { backgroundColor: 'rgba(239, 68, 68, 0.15)', color: '#f87171', border: '1px solid rgba(248, 113, 113, 0.2)' }}
+                            >
+                              <span 
+                                className="rounded-circle" 
+                                style={{ 
+                                  width: '6px', 
+                                  height: '6px', 
+                                  backgroundColor: mgr.status === 'idle' ? '#22c55e' : '#ef4444',
+                                  boxShadow: mgr.status === 'idle' ? '0 0 8px #22c55e' : '0 0 8px #ef4444'
+                                }}
+                              ></span>
+                              {mgr.status === 'idle' ? '可投标' : '已锁定'}
                             </span>
-                          )}
-                          <span className="badge px-2 py-1 rounded fs-8" 
-                                style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', color: '#94a3b8', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-                            名下业绩: {projects.filter((p) => p.manager_name === mgr.name).length} 项
-                          </span>
+                          </div>
                         </div>
-                      </div>
 
-                      {/* 底部备注区域 */}
-                      <div className="mt-auto pt-2 border-top border-white border-opacity-5">
-                        <p className="mb-0 text-truncate text-slate-400 fs-8" title={mgr.memo}>
-                          <i className="bi bi-chat-left-dots text-white-50 me-1"></i>
-                          <strong>备注:</strong> {mgr.memo || '暂无说明'}
-                        </p>
-                      </div>
+                        {/* 2. 证书与专业 (占 4 个栅格) */}
+                        <div className="col-12 col-md-4 border-end border-white border-opacity-5">
+                          <div className="d-flex flex-column gap-1">
+                            {/* 注册专业 */}
+                            {mgr.cert_major ? (
+                              <div className="d-flex align-items-center gap-2 fs-8.5 text-slate-300 text-truncate">
+                                <i className="bi bi-file-earmark-badge text-info"></i>
+                                <span className="text-white-50">{mgr.cert_name || '注册'}:</span>
+                                <span className="font-weight-bold text-truncate" style={{ color: '#e2e8f0' }} title={mgr.cert_major}>{mgr.cert_major}</span>
+                              </div>
+                            ) : (
+                              <div className="d-flex align-items-center gap-2 fs-8.5 text-muted">
+                                <i className="bi bi-file-earmark-badge"></i>
+                                <span>未登记证书专业</span>
+                              </div>
+                            )}
 
+                            {/* 技术职称 */}
+                            {mgr.title && (
+                              <div className="d-flex align-items-center gap-2 fs-8.5 text-slate-300 text-truncate">
+                                <i className="bi bi-award text-warning"></i>
+                                <span className="text-white-50">职称:</span>
+                                <span className="text-truncate" style={{ color: '#cbd5e1' }} title={`${mgr.title_major || '未填'} (${mgr.title})`}>
+                                  {mgr.title_major || '未填'} ({mgr.title})
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* 3. 标签与备注 (占 4 个栅格) */}
+                        <div className="col-12 col-md-4 border-end border-white border-opacity-5">
+                          <div className="d-flex align-items-center gap-3">
+                            <div className="d-flex flex-column gap-1 flex-shrink-0">
+                              {mgr.safety_cert && mgr.safety_cert !== '无' && (
+                                <span className="badge px-2 py-0.5 rounded fs-8 text-center" 
+                                      style={{ backgroundColor: 'rgba(14, 165, 233, 0.1)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.15)', width: '68px' }}>
+                                  安考 {mgr.safety_cert} 证
+                                </span>
+                              )}
+                              <span className="badge px-2 py-0.5 rounded fs-8 text-center" 
+                                    style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', color: '#94a3b8', border: '1px solid rgba(255, 255, 255, 0.08)', width: '68px' }}>
+                                业绩 {projects.filter((p) => p.manager_name === mgr.name).length} 项
+                              </span>
+                            </div>
+                            <div className="text-wrap fs-8 text-slate-400 pe-2 text-truncate-2-lines" title={mgr.memo} style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                              <strong className="text-white-50">备注:</strong> {mgr.memo || '暂无说明'}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 4. 操作按钮 (占 1 个栅格) */}
+                        <div className="col-12 col-md-1 text-md-end d-flex justify-content-md-end gap-2 flex-shrink-0">
+                          <button 
+                            type="button" 
+                            className="btn btn-xs rounded-circle d-flex align-items-center justify-content-center border-0" 
+                            style={{ backgroundColor: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', width: '28px', height: '28px' }} 
+                            onClick={() => openAddProject(mgr.name)}
+                            title="添加项目业绩"
+                          >
+                            <i className="bi bi-plus-lg fs-8"></i>
+                          </button>
+                          <button 
+                            type="button" 
+                            className="btn btn-xs rounded-circle d-flex align-items-center justify-content-center border-0" 
+                            style={{ backgroundColor: 'rgba(255, 255, 255, 0.06)', color: '#94a3b8', width: '28px', height: '28px' }} 
+                            onClick={() => openEditManager(mgr)}
+                            title="编辑基本信息"
+                          >
+                            <i className="bi bi-pencil-fill fs-8"></i>
+                          </button>
+                          <button 
+                            type="button" 
+                            className="btn btn-xs rounded-circle d-flex align-items-center justify-content-center border-0" 
+                            style={{ backgroundColor: 'rgba(239, 68, 68, 0.15)', color: '#f87171', width: '28px', height: '28px' }} 
+                            onClick={() => handleDeleteManager(mgr.id, mgr.name)}
+                            title="删除人员"
+                          >
+                            <i className="bi bi-trash3-fill fs-8"></i>
+                          </button>
+                        </div>
+
+                      </div>
                     </div>
                   </div>
                 );
