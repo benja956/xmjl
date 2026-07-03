@@ -1125,9 +1125,9 @@ function App() {
               <p className="lead mb-0 text-muted">✍️ 暂无符合筛选条件的项目经理</p>
             </div>
           ) : (
-            <div className="table-responsive border shadow-sm rounded bg-body w-fit mw-100">
+            <div className="table-responsive border shadow-sm rounded bg-body" style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto' }}>
               <table className="table table-striped table-hover align-middle mb-0 fs-8">
-                <thead className="table-light">
+                <thead className="table-light sticky-top" style={{ zIndex: 10, top: 0 }}>
                   <tr>
                     <th scope="col" className="py-2.5">姓名</th>
                     <th scope="col" className="py-2.5">人员类型</th>
