@@ -628,55 +628,57 @@ function App() {
           {/* 关联项目无折叠直接挂在下面 */}
           {myProjects.length > 0 && (
             <tr className="bg-light-subtle">
-              <td colSpan={7} className="p-3 bg-light-subtle">
-                <div className="table-responsive border rounded bg-white shadow-sm">
-                    <table className="table table-sm table-hover table-bordered mb-0 align-middle bg-white fs-8.5">
-                      <thead className="table-light">
+              <td colSpan={7} className="p-1.5 px-4 pb-2 bg-light-subtle">
+                <div className="table-responsive border-0 bg-transparent">
+                    <table className="table table-sm table-hover mb-0 align-middle bg-transparent text-secondary fs-9 opacity-90">
+                      <thead className="table-transparent border-bottom text-muted">
                         <tr>
-                          <th scope="col" className="py-2 px-2.5">项目名称</th>
-                          <th scope="col" className="py-2 px-2.5" style={{ width: '100px' }}>担任角色</th>
-                          <th scope="col" className="py-2 px-2.5" style={{ width: '100px' }}>建筑面积</th>
-                          <th scope="col" className="py-2 px-2.5" style={{ width: '100px' }}>合同金额</th>
-                          <th scope="col" className="py-2 px-2.5" style={{ width: '180px' }}>开竣工时间</th>
-                          <th scope="col" className="py-2 px-2.5" style={{ width: '100px' }}>四库平台</th>
-                          <th scope="col" className="py-2 px-2.5 text-center" style={{ width: '70px' }}>操作</th>
+                          <th scope="col" className="py-1.5 px-2 text-muted fw-normal">项目名称</th>
+                          <th scope="col" className="py-1.5 px-2 text-muted fw-normal" style={{ width: '80px' }}>担任角色</th>
+                          <th scope="col" className="py-1.5 px-2 text-muted fw-normal" style={{ width: '100px' }}>建筑面积</th>
+                          <th scope="col" className="py-1.5 px-2 text-muted fw-normal" style={{ width: '100px' }}>合同金额</th>
+                          <th scope="col" className="py-1.5 px-2 text-muted fw-normal" style={{ width: '180px' }}>开竣工时间</th>
+                          <th scope="col" className="py-1.5 px-2 text-muted fw-normal" style={{ width: '90px' }}>四库平台</th>
+                          <th scope="col" className="py-1.5 px-2 text-center text-muted fw-normal" style={{ width: '60px' }}>操作</th>
                         </tr>
                       </thead>
                       <tbody>
                         {myProjects.map((proj) => (
-                          <tr key={proj.id}>
-                            <td className="py-2 px-2.5 text-dark font-weight-bold">{proj.project_name}</td>
-                            <td className="py-2 px-2.5">
+                          <tr key={proj.id} className="border-0">
+                            <td className="py-1.5 px-2 text-secondary fw-semibold">{proj.project_name}</td>
+                            <td className="py-1.5 px-2">
                               <span 
                                 className="badge rounded-circle d-inline-flex align-items-center justify-content-center text-white" 
                                 style={{ 
-                                  width: '20px', 
-                                  height: '20px', 
+                                  width: '18px', 
+                                  height: '18px', 
                                   backgroundColor: proj.role === '技术负责人' ? '#0ea5e9' : '#a855f7',
                                   fontWeight: 'bold',
-                                  fontSize: '0.7rem'
+                                  fontSize: '0.65rem'
                                 }}
                               >
                                 {proj.role === '技术负责人' ? '技' : '项'}
                               </span>
                             </td>
-                            <td className="py-2 px-2.5 text-secondary">{proj.area || '—'}</td>
-                            <td className="py-2 px-2.5 text-secondary">{proj.amount || '—'}</td>
-                            <td className="py-2 px-2.5 text-secondary">{proj.duration || '—'}</td>
-                            <td className="py-2 px-2.5">
-                              <span className={`badge ${proj.record_status === '是' ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-secondary-subtle text-secondary border border-secondary-subtle'} fs-9`}>
+                            <td className="py-1.5 px-2 text-muted">{proj.area || '—'}</td>
+                            <td className="py-1.5 px-2 text-muted">{proj.amount || '—'}</td>
+                            <td className="py-1.5 px-2 text-muted">{proj.duration || '—'}</td>
+                            <td className="py-1.5 px-2">
+                              <span className={`badge ${proj.record_status === '是' ? 'bg-success-subtle text-success border-0' : 'bg-secondary-subtle text-secondary border-0'} fs-9.5 px-1.5 py-0.5`}>
                                 {proj.record_status === '是' ? '已入库' : '未入库'}
                               </span>
                             </td>
-                            <td className="py-2 px-2.5 text-center">
+                            <td className="py-1.5 px-2 text-center">
                               <button 
                                 type="button" 
-                                className="btn btn-outline-danger p-0.5 rounded-circle d-inline-flex align-items-center justify-content-center"
-                                style={{ width: '22px', height: '22px' }}
+                                className="btn btn-link text-danger p-0 d-inline-flex align-items-center justify-content-center"
+                                style={{ textDecoration: 'none', opacity: 0.6, height: '18px', width: '18px' }}
                                 onClick={() => handleDeleteProject(proj.id)}
                                 title="解除该项目关联"
+                                onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+                                onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.6')}
                               >
-                                <i className="bi bi-trash-fill" style={{ fontSize: '0.65rem' }}></i>
+                                <i className="bi bi-trash3" style={{ fontSize: '0.75rem' }}></i>
                               </button>
                             </td>
                           </tr>
