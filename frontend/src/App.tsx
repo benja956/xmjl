@@ -80,7 +80,7 @@ function App() {
   const [activeTab, setActiveTab] = useState<'manager' | 'project'>('manager');
   const [activeMenuManagerId, setActiveMenuManagerId] = useState<number | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
-  // const [expandedManagerIds, setExpandedManagerIds] = useState<number[]>([]);
+  const [expandedManagerIds, setExpandedManagerIds] = useState<number[]>([]);
 
   // 数据列表状态
   const [managers, setManagers] = useState<Manager[]>([]);
@@ -343,6 +343,12 @@ function App() {
     } catch (err: any) {
       alert(err.message);
     }
+  };
+
+  const toggleExpandManager = (id: number) => {
+    setExpandedManagerIds((prev) =>
+      prev.includes(id) ? prev.filter((mid) => mid !== id) : [...prev, id]
+    );
   };
 
   const handleDeleteProject = async (projId: number) => {
@@ -616,17 +622,34 @@ function App() {
               })()}
             </td>
             <td className="py-2">
-              <span className="badge bg-light text-dark border fs-8">
-                {myProjects.length} 项
-              </span>
+              {myProjects.length > 0 ? (
+                <button
+                  type="button"
+                  className={`btn btn-xs rounded-pill py-0.5 px-2 d-inline-flex align-items-center gap-1 font-weight-bold ${
+                    expandedManagerIds.includes(mgr.id) 
+                      ? 'btn-primary text-white shadow-xs' 
+                      : 'btn-outline-primary'
+                  }`}
+                  style={{ fontSize: '0.75rem' }}
+                  onClick={() => toggleExpandManager(mgr.id)}
+                  title={expandedManagerIds.includes(mgr.id) ? '点击折叠业绩' : '点击展开业绩'}
+                >
+                  <span>{myProjects.length} 项</span>
+                  <i className={`bi ${expandedManagerIds.includes(mgr.id) ? 'bi-chevron-up' : 'bi-chevron-down'}`}></i>
+                </button>
+              ) : (
+                <span className="badge bg-light text-muted border fs-8 px-2 py-0.5">
+                  0 项
+                </span>
+              )}
             </td>
             <td className="py-2 small text-muted text-truncate" style={{ maxWidth: '250px' }} title={mgr.memo}>
               {mgr.memo || '—'}
             </td>
           </tr>
 
-          {/* 关联项目无折叠直接挂在下面 */}
-          {myProjects.length > 0 && (
+          {/* 关联项目条件性折叠展开挂在下面 */}
+          {myProjects.length > 0 && expandedManagerIds.includes(mgr.id) && (
             <tr className="bg-light-subtle">
               <td colSpan={7} className="p-1.5 px-4 pb-2 bg-light-subtle">
                 <div className="table-responsive border-0 bg-transparent">
