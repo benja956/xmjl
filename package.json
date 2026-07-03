@@ -6,7 +6,7 @@
     "db:init-local": "npm run db:migrate-local && npm run db:seed-local",
     "db:migrate-local": "cd backend && npx wrangler d1 migrations apply xmjl_db --local",
     "db:seed-local": "cd backend && npx wrangler d1 execute xmjl_db --local --file=import.sql",
-    "dev": "npx concurrently -n \"api,web\" -c \"blue,green\" \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\""
+    "dev": "npx concurrently -n \"api,web\" -c \"blue,green\" \"npm run dev --prefix backend -- --ip 0.0.0.0\" \"npm run dev --prefix frontend -- --host\""
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

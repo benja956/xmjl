@@ -52,9 +52,10 @@ interface AuditLog {
 const getApiBase = () => {
   if (import.meta.env.DEV) {
     const port = window.location.port;
-    if (port === '5174') return 'http://localhost:8788';
-    if (port === '5175') return 'http://localhost:8789';
-    return 'http://localhost:8787';
+    const hostname = window.location.hostname;
+    if (port === '5174') return `http://${hostname}:8788`;
+    if (port === '5175') return `http://${hostname}:8789`;
+    return `http://${hostname}:8787`;
   }
   return window.location.host.endsWith('pages.dev')
     ? 'https://backend.benja956.workers.dev'
@@ -75,8 +76,9 @@ function App() {
   const [loginError, setLoginError] = useState<string | null>(null);
   const [loggingIn, setLoggingIn] = useState(false);
 
-  // 视图切换: 'manager' (项目经理视图) | 'project' (项目视图)
+  // 视图切换: 'manager' (项目经理视图) | 'project' (project 视图)
   const [activeTab, setActiveTab] = useState<'manager' | 'project'>('manager');
+  const [activeMenuManagerId, setActiveMenuManagerId] = useState<number | null>(null);
 
   // 数据列表状态
   const [managers, setManagers] = useState<Manager[]>([]);
@@ -201,6 +203,13 @@ function App() {
       fetchAllData();
     }
   }, [token]);
+
+  // 点击页面空白处自动收起人名操作菜单
+  useEffect(() => {
+    const handleCloseMenu = () => setActiveMenuManagerId(null);
+    document.addEventListener('click', handleCloseMenu);
+    return () => document.removeEventListener('click', handleCloseMenu);
+  }, []);
 
   // ==========================================
   // 鉴权事件处理
@@ -904,7 +913,6 @@ function App() {
                     <th scope="col" className="py-2.5">安考证书</th>
                     <th scope="col" className="py-2.5 text-center">名下业绩</th>
                     <th scope="col" className="py-2.5">备注说明</th>
-                    <th scope="col" className="py-2.5 text-end" style={{ width: '120px' }}>操作</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -912,19 +920,76 @@ function App() {
                     const myProjects = projects.filter((p) => p.manager_name === mgr.name);
                     return (
                       <tr key={mgr.id}>
-                        <td className="py-2">
+                        <td className="py-2 position-relative">
                           <span 
                             className="badge text-white px-2.5 py-1.5 fs-7.5 font-weight-bold" 
                             style={{ 
                               backgroundColor: mgr.status === 'idle' ? '#22c55e' : '#ef4444',
-                              minWidth: '70px',
-                              display: 'inline-block',
-                              textAlign: 'center'
+                              minWidth: '85px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              cursor: 'pointer',
+                              userSelect: 'none',
+                              gap: '4px'
                             }}
-                            title={mgr.status === 'idle' ? '空闲可投标' : '在建锁定'}
+                            onClick={(e) => {
+                              e.stopPropagation(); // 阻止冒泡到 document 全局关闭事件
+                              setActiveMenuManagerId(activeMenuManagerId === mgr.id ? null : mgr.id);
+                            }}
+                            title="点击展示操作菜单"
                           >
                             {mgr.name}
+                            <i className="bi bi-caret-down-fill" style={{ fontSize: '0.65rem' }}></i>
                           </span>
+
+                          {activeMenuManagerId === mgr.id && (
+                            <div 
+                              className="dropdown-menu show shadow-lg border position-absolute" 
+                              style={{ 
+                                zIndex: 1050, 
+                                left: '12px', 
+                                top: '38px', 
+                                minWidth: '160px',
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <button 
+                                type="button" 
+                                className="dropdown-item py-2 d-flex align-items-center" 
+                                onClick={() => {
+                                  openAddProject(mgr.name);
+                                  setActiveMenuManagerId(null);
+                                }}
+                              >
+                                <i className="bi bi-plus-circle text-primary me-2"></i>
+                                <span>增关联项目</span>
+                              </button>
+                              <button 
+                                type="button" 
+                                className="dropdown-item py-2 d-flex align-items-center" 
+                                onClick={() => {
+                                  openEditManager(mgr);
+                                  setActiveMenuManagerId(null);
+                                }}
+                              >
+                                <i className="bi bi-pencil-square text-secondary me-2"></i>
+                                <span>修改基本信息</span>
+                              </button>
+                              <div className="dropdown-divider my-1"></div>
+                              <button 
+                                type="button" 
+                                className="dropdown-item py-2 d-flex align-items-center text-danger" 
+                                onClick={() => {
+                                  handleDeleteManager(mgr.id, mgr.name);
+                                  setActiveMenuManagerId(null);
+                                }}
+                              >
+                                <i className="bi bi-trash3-fill me-2"></i>
+                                <span>删除人员</span>
+                              </button>
+                            </div>
+                          )}
                         </td>
                         <td className="py-2">
                           <span 
@@ -993,37 +1058,6 @@ function App() {
                         </td>
                         <td className="py-2 small text-muted text-truncate" style={{ maxWidth: '250px' }} title={mgr.memo}>
                           {mgr.memo || '—'}
-                        </td>
-                        <td className="py-2 text-end">
-                          <div className="btn-group btn-group-xs">
-                            <button 
-                              type="button" 
-                              className="btn btn-outline-primary d-flex align-items-center justify-content-center p-1.5 rounded-circle me-1" 
-                              style={{ width: '28px', height: '28px' }}
-                              onClick={() => openAddProject(mgr.name)}
-                              title="添加项目业绩"
-                            >
-                              <i className="bi bi-plus-lg fs-8"></i>
-                            </button>
-                            <button 
-                              type="button" 
-                              className="btn btn-outline-secondary d-flex align-items-center justify-content-center p-1.5 rounded-circle" 
-                              style={{ width: '28px', height: '28px' }}
-                              onClick={() => openEditManager(mgr)}
-                              title="编辑基本信息"
-                            >
-                              <i className="bi bi-pencil-fill fs-8"></i>
-                            </button>
-                            <button 
-                              type="button" 
-                              className="btn btn-outline-danger d-flex align-items-center justify-content-center p-1.5 rounded-circle" 
-                              style={{ width: '28px', height: '28px' }}
-                              onClick={() => handleDeleteManager(mgr.id, mgr.name)}
-                              title="删除人员"
-                            >
-                              <i className="bi bi-trash3-fill fs-8"></i>
-                            </button>
-                          </div>
                         </td>
                       </tr>
                     );
