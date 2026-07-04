@@ -636,4 +636,111 @@ app.get('/api/stats', async (c) => {
   }
 });
 
+// ==========================================
+// 6. 数据字典接口 (Dictionaries CRUD)
+// ==========================================
+
+// 获取字典项列表
+app.get('/api/dictionaries', async (c) => {
+  try {
+    const { results } = await c.env.DB.prepare(
+      'SELECT * FROM dictionary_data ORDER BY type ASC, value ASC'
+    ).all();
+    return c.json(results);
+  } catch (err: any) {
+    return c.json({ error: err.message }, 500);
+  }
+});
+
+// 新增字典项
+app.post('/api/dictionaries', async (c) => {
+  try {
+    const body = await c.req.json();
+    if (!body.type || !body.value) {
+      return c.json({ error: '字典类型和选项值不能为空' }, 400);
+    }
+    const payload = c.get('jwtPayload') as { username: string };
+    const currentUser = payload.username;
+
+    const result = await c.env.DB.prepare(
+      'INSERT INTO dictionary_data (type, value) VALUES (?, ?)'
+    )
+      .bind(body.type, body.value)
+      .run();
+
+    const newId = result.meta.last_row_id ? Number(result.meta.last_row_id) : null;
+    await writeAuditLog(c.env.DB, currentUser, 'ADD_DICT', newId, `新增字典项: [${body.type}] ${body.value}`);
+
+    return c.json({ success: true, id: newId });
+  } catch (err: any) {
+    return c.json({ error: err.message }, 500);
+  }
+});
+
+// 编辑字典项
+app.put('/api/dictionaries/:id', async (c) => {
+  try {
+    const id = c.req.param('id');
+    const body = await c.req.json();
+    if (!body.value) {
+      return c.json({ error: '字典选项值不能为空' }, 400);
+    }
+    const payload = c.get('jwtPayload') as { username: string };
+    const currentUser = payload.username;
+
+    const old = await c.env.DB.prepare('SELECT * FROM dictionary_data WHERE id = ?')
+      .bind(id)
+      .first() as any;
+
+    await c.env.DB.prepare(
+      'UPDATE dictionary_data SET value = ? WHERE id = ?'
+    )
+      .bind(body.value, id)
+      .run();
+
+    const oldVal = old ? old.value : '';
+    const dictType = old ? old.type : '';
+    await writeAuditLog(
+      c.env.DB,
+      currentUser,
+      'EDIT_DICT',
+      Number(id),
+      `修改字典项: [${dictType}] 从 ${oldVal} 改为 ${body.value}`
+    );
+
+    return c.json({ success: true });
+  } catch (err: any) {
+    return c.json({ error: err.message }, 500);
+  }
+});
+
+// 删除字典项
+app.delete('/api/dictionaries/:id', async (c) => {
+  try {
+    const id = c.req.param('id');
+    const payload = c.get('jwtPayload') as { username: string };
+    const currentUser = payload.username;
+
+    const old = await c.env.DB.prepare('SELECT * FROM dictionary_data WHERE id = ?')
+      .bind(id)
+      .first() as any;
+
+    await c.env.DB.prepare('DELETE FROM dictionary_data WHERE id = ?').bind(id).run();
+
+    const oldVal = old ? old.value : `ID ${id}`;
+    const dictType = old ? old.type : '';
+    await writeAuditLog(
+      c.env.DB,
+      currentUser,
+      'DELETE_DICT',
+      Number(id),
+      `删除字典项: [${dictType}] ${oldVal}`
+    );
+
+    return c.json({ success: true });
+  } catch (err: any) {
+    return c.json({ error: err.message }, 500);
+  }
+});
+
 export default app;

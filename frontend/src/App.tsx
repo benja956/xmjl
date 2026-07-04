@@ -40,6 +40,12 @@ interface Stats {
   near_expiry: number;
 }
 
+interface DictionaryItem {
+  id: number;
+  type: string;
+  value: string;
+}
+
 interface AuditLog {
   id: number;
   user_name: string;
@@ -77,8 +83,8 @@ function App() {
   const [loginError, setLoginError] = useState<string | null>(null);
   const [loggingIn, setLoggingIn] = useState(false);
 
-  // 视图切换: 'manager' (项目经理视图) | 'project' (project 视图)
-  const [activeTab, setActiveTab] = useState<'manager' | 'project'>('manager');
+  // 视图切换: 'manager' (项目经理视图) | 'project' (project 视图) | 'dict' (参数配置视图)
+  const [activeTab, setActiveTab] = useState<'manager' | 'project' | 'dict'>('manager');
   const [activeMenuManagerName, setActiveMenuManagerName] = useState<string | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [expandedManagerIds, setExpandedManagerIds] = useState<string[]>([]);
@@ -87,6 +93,7 @@ function App() {
   // 数据列表状态
   const [managers, setManagers] = useState<Manager[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [dictionaries, setDictionaries] = useState<DictionaryItem[]>([]);
   const [stats, setStats] = useState<Stats>({
     total_managers: 0,
     total_amount_万元: 0,
@@ -196,6 +203,10 @@ function App() {
       // 3. 获取所有项目列表
       const projRes = await fetchWithAuth(`${API_BASE}/api/projects`);
       if (projRes.ok) setProjects(await projRes.json());
+
+      // 4. 获取字典选项数据
+      const dictRes = await fetchWithAuth(`${API_BASE}/api/dictionaries`);
+      if (dictRes.ok) setDictionaries(await dictRes.json());
 
       setError(null);
     } catch (err: any) {
@@ -367,6 +378,42 @@ function App() {
     try {
       const res = await fetchWithAuth(`${API_BASE}/api/projects/${projId}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('删除项目失败');
+      await fetchAllData();
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
+  // ==========================================
+  // 数据字典维护处理
+  // ==========================================
+  const handleSaveDictionary = async (type: string, value: string, editId: number | null) => {
+    if (!value.trim()) return;
+    try {
+      const isEdit = editId !== null;
+      const url = isEdit
+        ? `${API_BASE}/api/dictionaries/${editId}`
+        : `${API_BASE}/api/dictionaries`;
+      const method = isEdit ? 'PUT' : 'POST';
+
+      const res = await fetchWithAuth(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(isEdit ? { value } : { type, value }),
+      });
+
+      if (!res.ok) throw new Error('保存字典项失败');
+      await fetchAllData();
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
+  const handleDeleteDictionary = async (id: number) => {
+    if (!confirm('确定要删除此项参数吗？')) return;
+    try {
+      const res = await fetchWithAuth(`${API_BASE}/api/dictionaries/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('删除字典项失败');
       await fetchAllData();
     } catch (err: any) {
       alert(err.message);
@@ -967,6 +1014,16 @@ function App() {
           >
             <i className="bi bi-journal-album me-1"></i>工程业绩视图
           </button>
+          <button
+            type="button"
+            className={`btn btn-xs rounded-pill px-3 py-1.5 fs-85 font-weight-bold transition-all border-0 ${activeTab === 'dict' ? 'btn-white shadow-xs text-primary' : 'text-secondary bg-transparent'}`}
+            onClick={() => {
+              setActiveTab('dict');
+              setShowAdvanced(false);
+            }}
+          >
+            <i className="bi bi-gear-fill me-1"></i>基础字典参数
+          </button>
         </div>
 
         {/* 中间：快速搜索输入框 */}
@@ -981,7 +1038,7 @@ function App() {
                 value={mgrSearch}
                 onChange={(e) => setMgrSearch(e.target.value)}
               />
-            ) : (
+            ) : activeTab === 'project' ? (
               <input
                 type="text"
                 className="form-control border-start-0"
@@ -989,29 +1046,38 @@ function App() {
                 value={projSearch}
                 onChange={(e) => setProjSearch(e.target.value)}
               />
+            ) : (
+              <input
+                type="text"
+                className="form-control border-start-0 bg-light-subtle"
+                placeholder="当前在参数字典视图，无需检索"
+                disabled
+              />
             )}
           </div>
         </div>
 
         {/* 右侧：功能按钮组 (高级筛选 Toggle、新增按钮、刷新) */}
         <div className="d-flex align-items-center gap-2">
-          <button
-            type="button"
-            className={`btn btn-xs d-flex align-items-center py-1.5 px-3 rounded-pill fs-85 ${showAdvanced ? 'btn-primary text-white' : 'btn-outline-secondary'}`}
-            onClick={() => setShowAdvanced(!showAdvanced)}
-          >
-            <i className="bi bi-funnel me-1"></i>
-            高级筛选 {showAdvanced ? '收起 ▴' : '展开 ▾'}
-          </button>
+          {activeTab !== 'dict' && (
+            <button
+              type="button"
+              className={`btn btn-xs d-flex align-items-center py-1.5 px-3 rounded-pill fs-85 ${showAdvanced ? 'btn-primary text-white' : 'btn-outline-secondary'}`}
+              onClick={() => setShowAdvanced(!showAdvanced)}
+            >
+              <i className="bi bi-funnel me-1"></i>
+              高级筛选 {showAdvanced ? '收起 ▴' : '展开 ▾'}
+            </button>
+          )}
           {activeTab === 'manager' ? (
             <button className="btn btn-xs btn-primary d-flex align-items-center py-1.5 px-3 rounded-pill fs-85" onClick={openAddManager}>
               <i className="bi bi-person-plus-fill me-1"></i> 新增人员
             </button>
-          ) : (
+          ) : activeTab === 'project' ? (
             <button className="btn btn-xs btn-primary d-flex align-items-center py-1.5 px-3 rounded-pill fs-85" onClick={() => openAddProject('')}>
               <i className="bi bi-plus-circle-fill me-1"></i> 新增业绩
             </button>
-          )}
+          ) : null}
           <button className="btn btn-xs btn-outline-primary d-flex align-items-center p-1.5 rounded-circle" onClick={fetchAllData} disabled={loading} title="刷新数据">
             <i className="bi bi-arrow-clockwise"></i>
           </button>
@@ -1162,7 +1228,7 @@ function App() {
             </div>
           )}
         </div>
-      ) : (
+      ) : activeTab === 'project' ? (
         // ==========================================
         // 视图二：工程业绩视图
         // ==========================================
@@ -1514,6 +1580,12 @@ function App() {
             );
           })()}
         </div>
+      ) : (
+        <DictionaryManagerPanel 
+          dictionaries={dictionaries}
+          onSave={handleSaveDictionary}
+          onDelete={handleDeleteDictionary}
+        />
       )}
 
       {/* 底部系统操作审计日志按钮 */}
@@ -1629,7 +1701,13 @@ function App() {
                         placeholder="如: 高级工程师"
                         value={mgrForm.title}
                         onChange={(e) => setMgrForm({ ...mgrForm, title: e.target.value })}
+                        list="titleList"
                       />
+                      <datalist id="titleList">
+                        {dictionaries.filter(d => d.type === 'title').map(d => (
+                          <option key={d.id} value={d.value} />
+                        ))}
+                      </datalist>
                     </div>
                     <div className="col-4">
                       <label className="form-label">职称专业</label>
@@ -1639,7 +1717,13 @@ function App() {
                         placeholder="如: 建筑工程"
                         value={mgrForm.title_major}
                         onChange={(e) => setMgrForm({ ...mgrForm, title_major: e.target.value })}
+                        list="titleMajorList"
                       />
+                      <datalist id="titleMajorList">
+                        {dictionaries.filter(d => d.type === 'title_major').map(d => (
+                          <option key={d.id} value={d.value} />
+                        ))}
+                      </datalist>
                     </div>
                     <div className="col-4">
                       <label className="form-label">发证日期</label>
@@ -1676,14 +1760,49 @@ function App() {
                     </div>
                   </div>
                   <div className="mb-3">
-                    <label className="form-label">证书注册专业</label>
+                    <label className="form-label font-weight-bold">证书注册专业 <span className="text-muted fs-85">(可直接输入，或点击下方标签快捷勾选)</span></label>
                     <input
                       type="text"
-                      className="form-control"
-                      placeholder="多专业请直接拼接，如: 建筑工程市政公用工程"
+                      className="form-control mb-2"
+                      placeholder="多专业用半角逗号隔开，如: 建筑工程,机电工程"
                       value={mgrForm.cert_major}
                       onChange={(e) => setMgrForm({ ...mgrForm, cert_major: e.target.value })}
                     />
+                    <div className="d-flex flex-wrap gap-1.5 mt-1">
+                      {dictionaries.filter(d => d.type === 'cert_major').map(d => {
+                        const isSelected = mgrForm.cert_major
+                          .split(',')
+                          .map(m => m.trim())
+                          .includes(d.value);
+                        return (
+                          <button
+                            key={d.id}
+                            type="button"
+                            className={`btn btn-xs rounded-pill px-2.5 py-1 d-flex align-items-center gap-1 border transition-all ${
+                              isSelected 
+                                ? 'btn-primary text-white border-primary shadow-xs' 
+                                : 'btn-light text-secondary bg-light-subtle'
+                            }`}
+                            onClick={() => {
+                              const currentMajors = mgrForm.cert_major
+                                .split(',')
+                                .map(m => m.trim())
+                                .filter(Boolean);
+                              if (currentMajors.includes(d.value)) {
+                                const updated = currentMajors.filter(m => m !== d.value).join(',');
+                                setMgrForm({ ...mgrForm, cert_major: updated });
+                              } else {
+                                currentMajors.push(d.value);
+                                setMgrForm({ ...mgrForm, cert_major: currentMajors.join(',') });
+                              }
+                            }}
+                          >
+                            <i className={`bi ${isSelected ? 'bi-dash-lg' : 'bi-plus-lg'}`}></i>
+                            <span>{d.value}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                   <div className="mb-3">
                     <label className="form-label">备注说明</label>
@@ -1738,9 +1857,9 @@ function App() {
                         value={projForm.role}
                         onChange={(e) => setProjForm({ ...projForm, role: e.target.value })}
                       >
-                        <option value="项目经理">项目经理</option>
-                        <option value="技术负责人">技术负责人</option>
-                        <option value="其他">其他人员</option>
+                        {dictionaries.filter(d => d.type === 'role').map(d => (
+                          <option key={d.id} value={d.value}>{d.value}</option>
+                        ))}
                       </select>
                     </div>
                     <div className="col-4">
@@ -1873,6 +1992,193 @@ function App() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+interface DictionaryManagerPanelProps {
+  dictionaries: DictionaryItem[];
+  onSave: (type: string, value: string, editId: number | null) => Promise<void>;
+  onDelete: (id: number) => Promise<void>;
+}
+
+function DictionaryManagerPanel({ dictionaries, onSave, onDelete }: DictionaryManagerPanelProps) {
+  const [selectedType, setSelectedType] = useState<string>('cert_major');
+  const [newValue, setNewValue] = useState('');
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingValue, setEditingValue] = useState('');
+
+  const types = [
+    { key: 'cert_major', label: '执业注册专业', icon: 'bi-patch-check-fill', color: 'text-success' },
+    { key: 'title_major', label: '职称专业', icon: 'bi-mortarboard-fill', color: 'text-primary' },
+    { key: 'title', label: '职称等级', icon: 'bi-award-fill', color: 'text-warning' },
+    { key: 'role', label: '参建工程岗位', icon: 'bi-briefcase-fill', color: 'text-info' },
+  ];
+
+  const currentItems = dictionaries.filter((d) => d.type === selectedType);
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newValue.trim()) return;
+    await onSave(selectedType, newValue.trim(), null);
+    setNewValue('');
+  };
+
+  const handleStartEdit = (item: DictionaryItem) => {
+    setEditingId(item.id);
+    setEditingValue(item.value);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditingValue('');
+  };
+
+  const handleSaveEdit = async (item: DictionaryItem) => {
+    if (!editingValue.trim()) return;
+    if (editingValue.trim() === item.value) {
+      handleCancelEdit();
+      return;
+    }
+    await onSave(selectedType, editingValue.trim(), item.id);
+    handleCancelEdit();
+  };
+
+  return (
+    <div className="row g-3">
+      {/* 左侧：类型列表 */}
+      <div className="col-12 col-md-3">
+        <div className="card border-0 shadow-2xs p-2 bg-white rounded-3">
+          <div className="nav flex-column nav-pills" role="tablist">
+            {types.map((t) => (
+              <button
+                key={t.key}
+                className={`nav-link text-start py-2.5 px-3 mb-1.5 rounded-3 d-flex align-items-center gap-2 transition-all border-0 fs-85 ${
+                  selectedType === t.key
+                    ? 'active bg-primary-subtle text-primary fw-bold shadow-2xs'
+                    : 'text-secondary bg-transparent hover-bg-light'
+                }`}
+                onClick={() => {
+                  setSelectedType(t.key);
+                  handleCancelEdit();
+                }}
+              >
+                <i className={`bi ${t.icon} ${t.color}`}></i>
+                <span>{t.label}</span>
+                <span className="badge rounded-pill bg-light text-secondary ms-auto fs-9">
+                  {dictionaries.filter((d) => d.type === t.key).length}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* 右侧：列表编辑 */}
+      <div className="col-12 col-md-9">
+        <div className="card border-0 shadow-2xs p-3.5 bg-white rounded-3">
+          <form onSubmit={handleAdd} className="mb-3.5">
+            <label className="form-label font-weight-bold fs-7 text-dark mb-2">
+              新增 {types.find((t) => t.key === selectedType)?.label} 选项
+            </label>
+            <div className="input-group input-group-sm">
+              <input
+                type="text"
+                className="form-control"
+                placeholder={`输入要添加的字典选项值...`}
+                value={newValue}
+                onChange={(e) => setNewValue(e.target.value)}
+                required
+              />
+              <button className="btn btn-primary d-flex align-items-center gap-1.5 px-3" type="submit">
+                <i className="bi bi-plus-circle"></i>
+                <span>添加</span>
+              </button>
+            </div>
+          </form>
+
+          <div className="table-responsive border rounded-3 bg-body" style={{ maxHeight: 'calc(100vh - 350px)', overflowY: 'auto' }}>
+            <table className="table table-striped table-hover align-middle mb-0 fs-85">
+              <thead className="table-light sticky-top" style={{ top: 0, zIndex: 5 }}>
+                <tr>
+                  <th scope="col" className="py-2 px-3">选项值</th>
+                  <th scope="col" className="py-2 px-3 text-end" style={{ width: '150px' }}>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {currentItems.length === 0 ? (
+                  <tr>
+                    <td colSpan={2} className="text-center py-4 text-muted">
+                      💡 当前类型下暂无参数，请在上方录入新增
+                    </td>
+                  </tr>
+                ) : (
+                  currentItems.map((item) => (
+                    <tr key={item.id}>
+                      <td className="py-2 px-3">
+                        {editingId === item.id ? (
+                          <input
+                            type="text"
+                            className="form-control form-control-sm"
+                            value={editingValue}
+                            onChange={(e) => setEditingValue(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleSaveEdit(item);
+                              if (e.key === 'Escape') handleCancelEdit();
+                            }}
+                            autoFocus
+                          />
+                        ) : (
+                          <span className="font-weight-bold text-dark">{item.value}</span>
+                        )}
+                      </td>
+                      <td className="py-2 px-3 text-end">
+                        {editingId === item.id ? (
+                          <div className="d-inline-flex gap-1.5">
+                            <button
+                              type="button"
+                              className="btn btn-xs btn-success rounded-pill py-1 px-2.5"
+                              onClick={() => handleSaveEdit(item)}
+                            >
+                              保存
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-xs btn-outline-secondary rounded-pill py-1 px-2.5"
+                              onClick={handleCancelEdit}
+                            >
+                              取消
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="d-inline-flex gap-2">
+                            <button
+                              type="button"
+                              className="btn btn-link text-secondary p-0 btn-xs border-0 bg-transparent"
+                              title="点击编辑"
+                              onClick={() => handleStartEdit(item)}
+                            >
+                              <i className="bi bi-pencil-square fs-75 text-secondary"></i>
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-link text-danger p-0 btn-xs border-0 bg-transparent"
+                              title="删除"
+                              onClick={() => onDelete(item.id)}
+                            >
+                              <i className="bi bi-trash3 fs-75 text-danger"></i>
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
