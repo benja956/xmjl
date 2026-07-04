@@ -1841,13 +1841,42 @@ function App() {
                 <div className="modal-body">
                   <div className="mb-3">
                     <label className="form-label font-weight-bold">项目名称 <span className="text-danger">*</span></label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={projForm.project_name}
-                      onChange={(e) => setProjForm({ ...projForm, project_name: e.target.value })}
-                      required
-                    />
+                    {!editingProject && targetManagerName !== '' ? (
+                      <select
+                        className="form-select"
+                        value={projForm.project_name}
+                        onChange={(e) => setProjForm({ ...projForm, project_name: e.target.value })}
+                        required
+                      >
+                        <option value="">-- 请选择系统内已有的工程项目 (防止重名分裂) --</option>
+                        {Array.from(new Set(projects.map((p) => p.project_name)))
+                          .filter(Boolean)
+                          .sort()
+                          .map((name) => (
+                            <option key={name} value={name}>{name}</option>
+                          ))
+                        }
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="请输入完整工程项目名称"
+                        value={projForm.project_name}
+                        onChange={(e) => setProjForm({ ...projForm, project_name: e.target.value })}
+                        required
+                        list="projectNameList"
+                      />
+                    )}
+                    <datalist id="projectNameList">
+                      {Array.from(new Set(projects.map((p) => p.project_name)))
+                        .filter(Boolean)
+                        .sort()
+                        .map((name) => (
+                          <option key={name} value={name} />
+                        ))
+                      }
+                    </datalist>
                   </div>
                   <div className="row mb-3">
                     <div className="col-4">
