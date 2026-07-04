@@ -790,7 +790,7 @@ function App() {
                                 </div>
                               ) : (
                                 <span className="text-success" style={{ fontSize: '0.75rem' }}>
-                                  <i className="bi bi-check-circle-fill me-1"></i>空闲可投标
+                                  <i className="bi bi-check-circle-fill me-1"></i>已解锁
                                 </span>
                               )}
                             </td>
@@ -1001,7 +1001,7 @@ function App() {
             </span>
             <span className="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 fs-85 shadow-3xs">
               <i className="bi bi-check-circle-fill text-success me-1"></i>
-              空闲可投标: <strong className="text-success">{stats.idle_managers}</strong>人
+              已解锁: <strong className="text-success">{stats.idle_managers}</strong>人
             </span>
             <span className="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 fs-85 shadow-3xs">
               <i className="bi bi-lock-fill text-danger me-1"></i>
@@ -1136,8 +1136,8 @@ function App() {
                     onChange={(e) => setMgrStatus(e.target.value)}
                   >
                     <option value="all">人员状态 (全部)</option>
-                    <option value="idle">🟢 空闲 (可投标)</option>
-                    <option value="locked">🔴 锁定 (不可投标)</option>
+                    <option value="idle">🟢 已解锁</option>
+                    <option value="locked">🔴 已锁定</option>
                   </select>
                 </div>
                 <div className="col-6 col-md-3">
@@ -1300,8 +1300,8 @@ function App() {
                     onChange={(e) => setProjMgrStatus(e.target.value)}
                   >
                     <option value="all">对应负责人状态 (全部)</option>
-                    <option value="idle">🟢 负责人当前空闲 (该业绩可用)</option>
-                    <option value="locked">🔴 负责人已被锁在别处 (该业绩不可用)</option>
+                    <option value="idle">🟢 负责人当前已解锁 (该业绩可用)</option>
+                    <option value="locked">🔴 负责人当前已锁定 (该业绩不可用)</option>
                   </select>
                 </div>
                 <div className="col-12 col-md-2">
@@ -1614,7 +1614,7 @@ function App() {
                                                     </div>
                                                   ) : (
                                                     <span className="text-success" style={{ fontSize: '0.75rem' }}>
-                                                      <i className="bi bi-check-circle-fill me-1"></i>空闲可投标
+                                                      <i className="bi bi-check-circle-fill me-1"></i>已解锁
                                                     </span>
                                                   )}
                                                 </td>
