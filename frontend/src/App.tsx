@@ -81,6 +81,7 @@ function App() {
   const [activeMenuManagerId, setActiveMenuManagerId] = useState<number | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [expandedManagerIds, setExpandedManagerIds] = useState<number[]>([]);
+  const [expandedProjectNames, setExpandedProjectNames] = useState<string[]>([]);
 
   // 数据列表状态
   const [managers, setManagers] = useState<Manager[]>([]);
@@ -343,6 +344,12 @@ function App() {
     } catch (err: any) {
       alert(err.message);
     }
+  };
+
+  const toggleExpandProject = (projName: string) => {
+    setExpandedProjectNames((prev) =>
+      prev.includes(projName) ? prev.filter((p) => p !== projName) : [...prev, projName]
+    );
   };
 
   const toggleExpandManager = (id: number) => {
@@ -1256,7 +1263,7 @@ function App() {
             </div>
           )}
 
-          {/* 项目展示列表 */}
+          {/* 项目展示列表 (大表 Table 改版) */}
           {(() => {
             const groupedMap: { [key: string]: {
               project_name: string;
@@ -1268,30 +1275,36 @@ function App() {
               filing_end: string;
               staffs: {
                 id: number;
+                manager_id: number;
                 manager_name: string;
                 role: string;
-                manager_status: 'idle' | 'locked';
-                raw_project: Project;
+                safety_cert: string;
+                manager_status: string;
+                raw_project: any;
               }[];
-            }} = {};
+            } } = {};
 
             filteredProjects.forEach((p) => {
-              if (!groupedMap[p.project_name]) {
-                groupedMap[p.project_name] = {
+              const key = p.project_name;
+              if (!groupedMap[key]) {
+                groupedMap[key] = {
                   project_name: p.project_name,
-                  amount: p.amount,
-                  area: p.area,
-                  duration: p.duration,
-                  record_status: p.record_status,
-                  filing_status: p.filing_status,
-                  filing_end: p.filing_end,
+                  amount: p.amount || '—',
+                  area: p.area || '—',
+                  duration: p.duration || '—',
+                  record_status: p.record_status || '无',
+                  filing_status: p.filing_status || '',
+                  filing_end: p.filing_end || '',
                   staffs: [],
                 };
               }
-              groupedMap[p.project_name].staffs.push({
+              const mDetail = managers.find((m) => m.name === p.manager_name);
+              groupedMap[key].staffs.push({
                 id: p.id,
+                manager_id: mDetail ? mDetail.id : 0,
                 manager_name: p.manager_name,
                 role: p.role,
+                safety_cert: mDetail ? mDetail.safety_cert : '',
                 manager_status: p.manager_status,
                 raw_project: p,
               });
@@ -1303,8 +1316,8 @@ function App() {
               <>
                 <div className="text-secondary mb-3 small d-flex align-items-center justify-content-between">
                   <span>找到 {groupedList.length} 个合并工程项目 (共包含 {filteredProjects.length} 条岗位记录)</span>
-                  <button className="btn btn-sm btn-outline-primary" onClick={fetchAllData}>
-                    <i className="bi bi-arrow-clockwise"></i> 刷新数据
+                  <button className="btn btn-xs btn-outline-primary d-flex align-items-center py-1.5 px-2.5 rounded-pill fs-85" onClick={fetchAllData}>
+                    <i className="bi bi-arrow-clockwise me-1"></i> 刷新数据
                   </button>
                 </div>
 
@@ -1313,167 +1326,180 @@ function App() {
                     <p className="lead mb-0 text-muted">🏗️ 暂无符合筛选条件的工程项目</p>
                   </div>
                 ) : (
-                  <div className="row g-3">
-                    {groupedList.map((gp, idx) => (
-                      <div key={idx} className="col-12 mb-3">
-                        {/* 深蓝色大容器底色 */}
-                        <div className="rounded p-3 shadow-sm text-white" style={{ backgroundColor: '#1e4663' }}>
-                          <div className="row g-3 align-items-center">
-                            {/* 左侧属性方块区域 (占用 6 个栅格) */}
-                            <div className="col-12 col-lg-6">
-                              <div className="d-flex flex-wrap gap-2">
-                                {/* 项目名称瓷贴 (粉紫) */}
-                                <div className="rounded p-2 px-3 d-flex flex-column justify-content-center shadow-2xs" 
-                                     style={{ backgroundColor: '#f5d0fe', color: '#701a75', minWidth: '160px', minHeight: '80px', maxWidth: '300px' }}>
-                                  <span className="fs-6 font-weight-bold text-truncate-2" title={gp.project_name}>
-                                    {gp.project_name}
+                  <div className="table-responsive border shadow-sm rounded bg-body" style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto' }}>
+                    <table className="table table-striped table-hover align-middle mb-0 fs-8" style={{ tableLayout: 'fixed', width: '100%' }}>
+                      <thead className="table-light sticky-top" style={{ zIndex: 10, top: 0 }}>
+                        <tr>
+                          <th scope="col" className="py-2.5" style={{ width: '280px' }}>项目名称</th>
+                          <th scope="col" className="py-2.5" style={{ width: '110px' }}>合同金额</th>
+                          <th scope="col" className="py-2.5" style={{ width: '110px' }}>建筑面积</th>
+                          <th scope="col" className="py-2.5" style={{ width: '180px' }}>开竣工时间</th>
+                          <th scope="col" className="py-2.5" style={{ width: '90px' }}>四库平台</th>
+                          <th scope="col" className="py-2.5 text-center" style={{ width: '95px' }}>参建人员</th>
+                          <th scope="col" className="py-2.5">备案/备注说明</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {groupedList.map((gp, gIdx) => {
+                          const isExpanded = expandedProjectNames.includes(gp.project_name);
+                          return (
+                            <Fragment key={gIdx}>
+                              {/* 项目主信息行 */}
+                              <tr>
+                                <td className="py-2 font-weight-bold text-dark text-truncate" title={gp.project_name}>
+                                  <span className="me-1">{gp.project_name}</span>
+                                  {gp.staffs.length > 0 && (
+                                    <button
+                                      type="button"
+                                      className="btn btn-link text-primary p-0 opacity-50 btn-xs"
+                                      onClick={() => openEditProject(gp.staffs[0].raw_project)}
+                                      title="修改项目信息"
+                                      style={{ textDecoration: 'none' }}
+                                      onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+                                      onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.5')}
+                                    >
+                                      <i className="bi bi-pencil-square"></i>
+                                    </button>
+                                  )}
+                                </td>
+                                <td className="py-2 text-secondary">{gp.amount}</td>
+                                <td className="py-2 text-secondary">{gp.area}</td>
+                                <td className="py-2 text-secondary">{gp.duration}</td>
+                                <td className="py-2">
+                                  <span className={`badge ${gp.record_status === '已备案' || gp.record_status === '已入库' || gp.record_status === '是' ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-secondary-subtle text-secondary border border-secondary-subtle'} fs-9`}>
+                                    {gp.record_status}
                                   </span>
-                                  <span className="fs-8 opacity-75">工程项目</span>
-                                </div>
+                                </td>
+                                <td className="py-2">
+                                  {gp.staffs.length > 0 ? (
+                                    <button
+                                      type="button"
+                                      className={`btn btn-xs rounded-pill py-0.5 px-2 d-inline-flex align-items-center gap-1 font-weight-bold ${
+                                        isExpanded 
+                                          ? 'btn-primary text-white shadow-xs' 
+                                          : 'btn-outline-primary'
+                                      }`}
+                                      style={{ fontSize: '0.75rem' }}
+                                      onClick={() => toggleExpandProject(gp.project_name)}
+                                      title={isExpanded ? '点击折叠人员' : '点击展开人员'}
+                                    >
+                                      <span>{gp.staffs.length} 人</span>
+                                      <i className={`bi ${isExpanded ? 'bi-chevron-up' : 'bi-chevron-down'}`}></i>
+                                    </button>
+                                  ) : (
+                                    <span className="badge bg-light text-muted border fs-8 px-2 py-0.5">
+                                      0 人
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="py-2 small text-muted text-truncate" style={{ maxWidth: '250px' }}>
+                                  {gp.filing_status ? (
+                                    <span className="badge bg-info-subtle text-info border border-info-subtle fs-9 me-1.5">
+                                      {gp.filing_status}
+                                    </span>
+                                  ) : null}
+                                  {gp.filing_end ? `预计到 ${gp.filing_end}` : '—'}
+                                </td>
+                              </tr>
 
-                                {/* 金额瓷贴 (粉红) */}
-                                <div className="rounded p-2 px-3 text-center d-flex flex-column justify-content-center align-items-center shadow-2xs"
-                                     style={{ backgroundColor: '#fce7f3', color: '#831843', minWidth: '90px', minHeight: '80px' }}>
-                                  <span className="fs-6 font-weight-bold text-truncate w-100">{gp.amount || '—'}</span>
-                                  <span className="fs-8 opacity-75">合同金额</span>
-                                </div>
-
-                                {/* 面积瓷贴 (粉红) */}
-                                <div className="rounded p-2 px-3 text-center d-flex flex-column justify-content-center align-items-center shadow-2xs"
-                                     style={{ backgroundColor: '#fce7f3', color: '#831843', minWidth: '90px', minHeight: '80px' }}>
-                                  <span className="fs-6 font-weight-bold text-truncate w-100">{gp.area || '—'}</span>
-                                  <span className="fs-8 opacity-75">建筑面积</span>
-                                </div>
-
-                                {/* 四库备案瓷贴 */}
-                                <div className="rounded p-2 px-3 text-center d-flex flex-column justify-content-center align-items-center shadow-2xs"
-                                     style={{ backgroundColor: '#e0f2fe', color: '#0369a1', minWidth: '80px', minHeight: '80px' }}>
-                                  <span className="fs-7 font-weight-bold text-truncate w-100">{gp.record_status || '无'}</span>
-                                  <span className="fs-8 opacity-75">四库平台</span>
-                                </div>
-
-                                {/* 备案状态瓷贴 */}
-                                {gp.filing_status && (
-                                  <div className="rounded p-2 px-3 text-center d-flex flex-column justify-content-center align-items-center shadow-2xs"
-                                       style={gp.filing_status === '备案中' 
-                                         ? { backgroundColor: '#fee2e2', color: '#991b1b', minWidth: '90px', minHeight: '80px' } 
-                                         : { backgroundColor: '#d1fae5', color: '#065f46', minWidth: '90px', minHeight: '80px' }}>
-                                    <span className="fs-7 font-weight-bold">{gp.filing_status}</span>
-                                    <span className="fs-8 opacity-75">云端备案</span>
-                                  </div>
-                                )}
-                              </div>
-
-                              {/* 工期基本信息 */}
-                              <div className="mt-3 pt-2 border-top border-white border-opacity-10 text-white-50 small">
-                                <i className="bi bi-calendar3 me-1"></i> <strong>开竣工时间/工期:</strong> {gp.duration || '—'}
-                              </div>
-                            </div>
-
-                            {/* 右侧参建人员明细条区域 (占用 6 个栅格) */}
-                            <div className="col-12 col-lg-6 border-start border-white border-opacity-10 ps-lg-4">
-                              <div className="d-flex justify-content-between align-items-center mb-2.5">
-                                <h6 className="mb-0 font-weight-bold text-white-50">
-                                  <i className="bi bi-people-fill me-1"></i> 本项目参建人员 ({gp.staffs.length})
-                                </h6>
-                              </div>
-
-                              <div className="table-responsive" style={{ maxHeight: '220px', overflowY: 'auto' }}>
-                                <table className="table table-sm table-borderless align-middle mb-0 text-white fs-85">
-                                  <thead>
-                                    <tr className="border-bottom border-white border-opacity-10 text-white-50 fs-8">
-                                      <th className="py-1">名字</th>
-                                      <th className="py-1 text-center">职责</th>
-                                      <th className="py-1 text-center">证书</th>
-                                      <th className="py-1 text-end">操作</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {gp.staffs.map((staff) => {
-                                      const isLocked = staff.manager_status === 'locked';
-                                      const roleAbbr = getRoleAbbr(staff.role);
-                                      const certAbbr = getCertMajorAbbr(staff.manager_name);
-                                      return (
-                                        <tr key={staff.id} className="border-bottom border-white border-opacity-5">
-                                          {/* 名字：锁定红色，未锁定绿色 */}
-                                          <td className="py-1.5 font-weight-bold text-truncate" style={{ maxWidth: '95px' }}>
-                                            <span 
-                                              className="badge px-2 py-1 rounded text-white" 
-                                              style={{ 
-                                                backgroundColor: isLocked ? '#ef4444' : '#22c55e', 
-                                                display: 'inline-block',
-                                                minWidth: '65px',
-                                                textAlign: 'center'
-                                              }}
-                                            >
-                                              {staff.manager_name}
-                                            </span>
-                                          </td>
-                                          {/* 职责：“项”或“技” */}
-                                          <td className="py-1.5 text-center">
-                                            <span 
-                                              className="badge rounded-circle d-inline-flex align-items-center justify-content-center" 
-                                              style={{ 
-                                                width: '22px', 
-                                                height: '22px', 
-                                                backgroundColor: staff.role === '项目经理' ? '#a855f7' : '#0ea5e9',
-                                                color: '#fff',
-                                                fontWeight: 'bold',
-                                                fontSize: '0.75rem'
-                                              }}
-                                              title={staff.role}
-                                            >
-                                              {roleAbbr}
-                                            </span>
-                                          </td>
-                                          {/* 证书专业：建/市 */}
-                                          <td className="py-1.5 text-center font-weight-bold">
-                                            {certAbbr !== '—' ? (
-                                              certAbbr.split('/').map((c, i) => (
-                                                <span 
-                                                  key={i} 
-                                                  className="badge mx-0.5 px-1.5 py-0.5 rounded text-dark" 
-                                                  style={{ 
-                                                    backgroundColor: c === '建' ? '#fde047' : '#fdba74', 
-                                                    fontSize: '0.7rem' 
-                                                  }}
-                                                >
-                                                  {c}
-                                                </span>
-                                              ))
-                                            ) : (
-                                              <span className="text-white-50">—</span>
-                                            )}
-                                          </td>
-                                          <td className="py-1.5 text-end">
-                                            <div className="btn-group btn-group-xs">
-                                              <button
-                                                type="button"
-                                                className="btn btn-outline-light border-0 py-0 px-1.5 fs-8 opacity-75 hover-opacity-100"
-                                                onClick={() => openEditProject(staff.raw_project)}
-                                              >
-                                                改
-                                              </button>
-                                              <button
-                                                type="button"
-                                                className="btn btn-outline-danger border-0 py-0 px-1.5 fs-8 opacity-75 hover-opacity-100"
-                                                onClick={() => handleDeleteProject(staff.id)}
-                                              >
-                                                删
-                                              </button>
-                                            </div>
-                                          </td>
-                                        </tr>
-                                      );
-                                    })}
-                                  </tbody>
-                                </table>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                              {/* 参建人员明细子表 (下挂折叠) */}
+                              {gp.staffs.length > 0 && isExpanded && (
+                                <tr className="bg-light-subtle">
+                                  <td colSpan={7} className="p-1.5 px-4 pb-2 bg-light-subtle">
+                                    <div className="table-responsive border-0 bg-transparent">
+                                      <table className="table table-sm table-hover mb-0 align-middle bg-transparent text-secondary fs-9 opacity-90">
+                                        <thead className="table-transparent border-bottom text-muted">
+                                          <tr>
+                                            <th scope="col" className="py-1.5 px-2 text-muted fw-normal" style={{ width: '110px' }}>名字</th>
+                                            <th scope="col" className="py-1.5 px-2 text-muted fw-normal" style={{ width: '80px' }}>担任角色</th>
+                                            <th scope="col" className="py-1.5 px-2 text-muted fw-normal" style={{ width: '100px' }}>注册专业</th>
+                                            <th scope="col" className="py-1.5 px-2 text-muted fw-normal" style={{ width: '80px' }}>安考证书</th>
+                                            <th scope="col" className="py-1.5 px-2 text-center text-muted fw-normal" style={{ width: '60px' }}>操作</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {gp.staffs.map((st) => {
+                                            const stSafety = st.safety_cert ? st.safety_cert.replace('证', '').trim().toUpperCase() : '';
+                                            return (
+                                              <tr key={st.id} className="border-0">
+                                                <td className="py-1.5 px-2">
+                                                  <span 
+                                                    className="badge px-2 py-1 fs-9 font-weight-bold border"
+                                                    style={{
+                                                      backgroundColor: st.manager_status === 'idle' ? '#e8f5e9' : '#fde8e8',
+                                                      color: st.manager_status === 'idle' ? '#0f5132' : '#842029',
+                                                      borderColor: st.manager_status === 'idle' ? 'rgba(15, 81, 50, 0.2)' : 'rgba(132, 32, 41, 0.2)',
+                                                      minWidth: '70px',
+                                                      display: 'inline-flex',
+                                                      alignItems: 'center',
+                                                      justifyContent: 'center'
+                                                    }}
+                                                  >
+                                                    {st.manager_name}
+                                                  </span>
+                                                </td>
+                                                <td className="py-1.5 px-2">
+                                                  <span 
+                                                    className="badge rounded-circle d-inline-flex align-items-center justify-content-center text-white" 
+                                                    style={{ 
+                                                      width: '18px', 
+                                                      height: '18px', 
+                                                      backgroundColor: st.role === '技术负责人' ? '#0ea5e9' : '#a855f7',
+                                                      fontWeight: 'bold',
+                                                      fontSize: '0.65rem'
+                                                    }}
+                                                  >
+                                                    {getRoleAbbr(st.role)}
+                                                  </span>
+                                                </td>
+                                                <td className="py-1.5 px-2 text-muted">
+                                                  {getCertMajorAbbr(st.manager_name)}
+                                                </td>
+                                                <td className="py-1.5 px-2">
+                                                  {stSafety ? (
+                                                    <span 
+                                                      className="badge rounded-circle d-inline-flex align-items-center justify-content-center border" 
+                                                      style={{ 
+                                                        width: '18px', 
+                                                        height: '18px', 
+                                                        backgroundColor: stSafety === 'A' ? '#fee2e2' : stSafety === 'B' ? '#dbeafe' : '#fef3c7',
+                                                        color: stSafety === 'A' ? '#991b1b' : stSafety === 'B' ? '#1e40af' : '#78350f',
+                                                        borderColor: stSafety === 'A' ? 'rgba(153, 27, 27, 0.2)' : stSafety === 'B' ? 'rgba(30, 64, 175, 0.2)' : 'rgba(120, 53, 15, 0.2)',
+                                                        fontWeight: 'bold',
+                                                        fontSize: '0.65rem'
+                                                      }}
+                                                    >
+                                                      {stSafety}
+                                                    </span>
+                                                  ) : '—'}
+                                                </td>
+                                                <td className="py-1.5 px-2 text-center">
+                                                  <button 
+                                                    type="button" 
+                                                    className="btn btn-link text-danger p-0 d-inline-flex align-items-center justify-content-center"
+                                                    style={{ textDecoration: 'none', opacity: 0.6, height: '18px', width: '18px' }}
+                                                    onClick={() => handleDeleteProject(st.id)}
+                                                    title="解除该岗位关联"
+                                                    onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+                                                    onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.6')}
+                                                  >
+                                                    <i className="bi bi-trash3" style={{ fontSize: '0.75rem' }}></i>
+                                                  </button>
+                                                </td>
+                                              </tr>
+                                            );
+                                          })}
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                  </td>
+                                </tr>
+                              )}
+                            </Fragment>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   </div>
                 )}
               </>
