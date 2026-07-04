@@ -203,9 +203,11 @@ app.get('/api/managers', async (c) => {
     let sql = `
       SELECT 
         pm.*,
-        COUNT(p.id) as project_count,
-        SUM(CASE WHEN p.filing_status = '备案中' OR p.duration LIKE '%在建%' OR p.duration LIKE '%至今%' THEN 1 ELSE 0 END) as locked_count
+        GROUP_CONCAT(DISTINCT cm.major) as cert_major,
+        COUNT(DISTINCT p.id) as project_count,
+        COUNT(DISTINCT CASE WHEN p.filing_status = '备案中' OR p.end_date IS NULL THEN p.id ELSE NULL END) as locked_count
       FROM project_managers pm
+      LEFT JOIN manager_cert_majors cm ON pm.name = cm.manager_name
       LEFT JOIN projects p ON pm.name = p.manager_name
     `;
 
@@ -217,8 +219,8 @@ app.get('/api/managers', async (c) => {
       params.push(`%${q}%`, `%${q}%`);
     }
     if (cert_major) {
-      whereConditions.push('pm.cert_major LIKE ?');
-      params.push(`%${cert_major}%`);
+      whereConditions.push('EXISTS (SELECT 1 FROM manager_cert_majors WHERE manager_name = pm.name AND major = ?)');
+      params.push(cert_major);
     }
     if (title) {
       whereConditions.push('pm.title LIKE ?');
@@ -233,7 +235,7 @@ app.get('/api/managers', async (c) => {
       sql += ' WHERE ' + whereConditions.join(' AND ');
     }
 
-    sql += ' GROUP BY pm.id ORDER BY pm.name ASC';
+    sql += ' GROUP BY pm.name ORDER BY pm.name ASC';
 
     const stmt = c.env.DB.prepare(sql).bind(...params);
     const { results } = await stmt.all();
@@ -241,7 +243,7 @@ app.get('/api/managers', async (c) => {
     // 映射状态：若 locked_count > 0，则该经理被锁定，否则空闲 (idle)
     const formatted = results.map((row: any) => ({
       ...row,
-      status: row.locked_count > 0 ? 'locked' : 'idle',
+      status: Number(row.locked_count || 0) > 0 ? 'locked' : 'idle',
     }));
 
     return c.json(formatted);
@@ -259,55 +261,46 @@ app.post('/api/managers', async (c) => {
     const payload = c.get('jwtPayload') as { username: string };
     const currentUser = payload.username;
 
-    const result = await c.env.DB.prepare(
-      'INSERT INTO project_managers (name, title, title_major, cert_name, cert_major, safety_cert, memo) VALUES (?, ?, ?, ?, ?, ?, ?)'
+    // 职称发证日期分列处理
+    let titleMajor = body.title_major || '';
+    let titleDate = body.title_date || null;
+    
+    // 后备兼容性提取
+    if (titleMajor && !titleDate) {
+      const match = titleMajor.trim().match(/(\d{4}\.\d{1,2}\.\d{1,2})$/);
+      if (match) {
+        titleDate = match[1].replace(/\./g, '-');
+        titleMajor = titleMajor.substring(0, match.index).trim();
+      }
+    }
+
+    await c.env.DB.prepare(
+      'INSERT INTO project_managers (name, title, title_major, title_date, cert_name, safety_cert, memo) VALUES (?, ?, ?, ?, ?, ?, ?)'
     )
       .bind(
         body.name,
         body.title || '',
-        body.title_major || '',
+        titleMajor,
+        titleDate,
         body.cert_name || '一级建造师',
-        body.cert_major || '',
         body.safety_cert || '无',
         body.memo || ''
       )
       .run();
 
-    const newId = result.meta.last_row_id ? Number(result.meta.last_row_id) : null;
-    await writeAuditLog(c.env.DB, currentUser, 'ADD_MANAGER', newId, `新增项目经理: ${body.name}`);
+    // 写入展平的注册专业子表
+    if (body.cert_major) {
+      const majors = body.cert_major.split(',').map((m: string) => m.trim()).filter(Boolean);
+      for (const major of majors) {
+        await c.env.DB.prepare(
+          'INSERT INTO manager_cert_majors (manager_name, major) VALUES (?, ?)'
+        )
+          .bind(body.name, major)
+          .run();
+      }
+    }
 
-    return c.json({ success: true, id: newId });
-  } catch (err: any) {
-    return c.json({ error: err.message }, 500);
-  }
-});
-
-// 修改项目经理基本信息
-app.put('/api/managers/:id', async (c) => {
-  try {
-    const id = c.req.param('id');
-    const body = await c.req.json();
-    if (!body.name) return c.json({ error: '姓名不能为空' }, 400);
-
-    const payload = c.get('jwtPayload') as { username: string };
-    const currentUser = payload.username;
-
-    await c.env.DB.prepare(
-      'UPDATE project_managers SET name = ?, title = ?, title_major = ?, cert_name = ?, cert_major = ?, safety_cert = ?, memo = ? WHERE id = ?'
-    )
-      .bind(
-        body.name,
-        body.title || '',
-        body.title_major || '',
-        body.cert_name || '一级建造师',
-        body.cert_major || '',
-        body.safety_cert || '无',
-        body.memo || '',
-        id
-      )
-      .run();
-
-    await writeAuditLog(c.env.DB, currentUser, 'EDIT_MANAGER', Number(id), `更新项目经理信息: ${body.name}`);
+    await writeAuditLog(c.env.DB, currentUser, 'ADD_MANAGER', null, `新增项目经理: ${body.name}`);
 
     return c.json({ success: true });
   } catch (err: any) {
@@ -315,22 +308,78 @@ app.put('/api/managers/:id', async (c) => {
   }
 });
 
-// 删除项目经理 (外键级联删除关联的业绩项目)
-app.delete('/api/managers/:id', async (c) => {
+// 修改项目经理基本信息 (oldName 作为 URL 参数)
+app.put('/api/managers/:oldName', async (c) => {
   try {
-    const id = c.req.param('id');
+    const oldName = c.req.param('oldName');
+    const body = await c.req.json();
+    if (!body.name) return c.json({ error: '姓名不能为空' }, 400);
+
     const payload = c.get('jwtPayload') as { username: string };
     const currentUser = payload.username;
 
-    // 先查出姓名，以完善审计信息
-    const mgr = await c.env.DB.prepare('SELECT name FROM project_managers WHERE id = ?')
-      .bind(id)
-      .first();
+    // 职称发证日期分列处理
+    let titleMajor = body.title_major || '';
+    let titleDate = body.title_date || null;
+    
+    if (titleMajor && !titleDate) {
+      const match = titleMajor.trim().match(/(\d{4}\.\d{1,2}\.\d{1,2})$/);
+      if (match) {
+        titleDate = match[1].replace(/\./g, '-');
+        titleMajor = titleMajor.substring(0, match.index).trim();
+      }
+    }
 
-    await c.env.DB.prepare('DELETE FROM project_managers WHERE id = ?').bind(id).run();
+    // 1. 删除旧的注册专业关联
+    await c.env.DB.prepare('DELETE FROM manager_cert_majors WHERE manager_name = ?')
+      .bind(oldName)
+      .run();
 
-    const nameStr = mgr ? (mgr.name as string) : `ID ${id}`;
-    await writeAuditLog(c.env.DB, currentUser, 'DELETE_MANAGER', Number(id), `删除项目经理: ${nameStr} 及其名下的全部关联业绩`);
+    // 2. 插入新的注册专业关联
+    if (body.cert_major) {
+      const majors = body.cert_major.split(',').map((m: string) => m.trim()).filter(Boolean);
+      for (const major of majors) {
+        await c.env.DB.prepare(
+          'INSERT INTO manager_cert_majors (manager_name, major) VALUES (?, ?)'
+        )
+          .bind(body.name, major)
+          .run();
+      }
+    }
+
+    // 3. 更新主表项目经理 (支持修改姓名，由 ON UPDATE CASCADE 级联更新外键)
+    await c.env.DB.prepare(
+      'UPDATE project_managers SET name = ?, title = ?, title_major = ?, title_date = ?, cert_name = ?, safety_cert = ?, memo = ? WHERE name = ?'
+    )
+      .bind(
+        body.name,
+        body.title || '',
+        titleMajor,
+        titleDate,
+        body.cert_name || '一级建造师',
+        body.safety_cert || '无',
+        body.memo || '',
+        oldName
+      )
+      .run();
+
+    await writeAuditLog(c.env.DB, currentUser, 'EDIT_MANAGER', null, `更新项目经理信息: ${body.name}`);
+
+    return c.json({ success: true });
+  } catch (err: any) {
+    return c.json({ error: err.message }, 500);
+  }
+});
+
+// 删除项目经理 (级联删除关联的所有业绩项目和专业)
+app.delete('/api/managers/:name', async (c) => {
+  try {
+    const name = c.req.param('name');
+    const payload = c.get('jwtPayload') as { username: string };
+    const currentUser = payload.username;
+
+    await c.env.DB.prepare('DELETE FROM project_managers WHERE name = ?').bind(name).run();
+    await writeAuditLog(c.env.DB, currentUser, 'DELETE_MANAGER', null, `删除项目经理: ${name} 及其关联的所有业绩与专业`);
 
     return c.json({ success: true });
   } catch (err: any) {
@@ -343,7 +392,7 @@ app.get('/api/managers/:name/projects', async (c) => {
   try {
     const name = c.req.param('name');
     const { results } = await c.env.DB.prepare(
-      'SELECT * FROM projects WHERE manager_name = ? ORDER BY duration DESC'
+      'SELECT * FROM projects WHERE manager_name = ? ORDER BY (end_date IS NULL) DESC, end_date DESC'
     )
       .bind(name)
       .all();
@@ -367,11 +416,11 @@ app.get('/api/projects', async (c) => {
     let sql = `
       SELECT 
         p.*,
-        pm.id as manager_id,
         (
-          SELECT SUM(CASE WHEN inner_p.filing_status = '备案中' OR inner_p.duration LIKE '%在建%' OR inner_p.duration LIKE '%至今%' THEN 1 ELSE 0 END)
+          SELECT COUNT(inner_p.id)
           FROM projects inner_p
           WHERE inner_p.manager_name = p.manager_name
+            AND (inner_p.filing_status = '备案中' OR inner_p.end_date IS NULL)
         ) as manager_locked_count
       FROM projects p
       LEFT JOIN project_managers pm ON p.manager_name = pm.name
@@ -397,7 +446,8 @@ app.get('/api/projects', async (c) => {
       sql += ' WHERE ' + whereConditions.join(' AND ');
     }
 
-    sql += ' ORDER BY p.duration DESC, p.id DESC';
+    // 优先将在建项目 (end_date IS NULL) 排序在最上方，接着按竣工时间倒序
+    sql += ' ORDER BY (p.end_date IS NULL) DESC, p.end_date DESC, p.id DESC';
 
     const { results } = await c.env.DB.prepare(sql).bind(...params).all();
 
@@ -425,7 +475,7 @@ app.post('/api/projects', async (c) => {
     const currentUser = payload.username;
 
     const result = await c.env.DB.prepare(
-      'INSERT INTO projects (manager_name, project_name, role, area, amount, duration, record_status, filing_status, filing_post, filing_start, filing_end) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+      'INSERT INTO projects (manager_name, project_name, role, area, amount, start_date, end_date, record_status, filing_status, filing_post, filing_start, filing_end) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     )
       .bind(
         body.manager_name,
@@ -433,7 +483,8 @@ app.post('/api/projects', async (c) => {
         body.role || '项目经理',
         body.area || '',
         body.amount || '',
-        body.duration || '',
+        body.start_date || null,
+        body.end_date || null,
         body.record_status || '无',
         body.filing_status || '',
         body.filing_post || '',
@@ -468,14 +519,15 @@ app.put('/api/projects/:id', async (c) => {
     const currentUser = payload.username;
 
     await c.env.DB.prepare(
-      'UPDATE projects SET project_name = ?, role = ?, area = ?, amount = ?, duration = ?, record_status = ?, filing_status = ?, filing_post = ?, filing_start = ?, filing_end = ? WHERE id = ?'
+      'UPDATE projects SET project_name = ?, role = ?, area = ?, amount = ?, start_date = ?, end_date = ?, record_status = ?, filing_status = ?, filing_post = ?, filing_start = ?, filing_end = ? WHERE id = ?'
     )
       .bind(
         body.project_name,
         body.role || '项目经理',
         body.area || '',
         body.amount || '',
-        body.duration || '',
+        body.start_date || null,
+        body.end_date || null,
         body.record_status || '无',
         body.filing_status || '',
         body.filing_post || '',
@@ -546,15 +598,15 @@ app.get('/api/stats', async (c) => {
     // 3. 锁定经理与空闲经理人数计算
     const lockStats = await c.env.DB.prepare(`
       SELECT 
-        COUNT(id) as total_mgr,
+        COUNT(name) as total_mgr,
         SUM(CASE WHEN locked_count > 0 THEN 1 ELSE 0 END) as locked_mgr
       FROM (
         SELECT 
-          pm.id,
-          SUM(CASE WHEN p.filing_status = '备案中' OR p.duration LIKE '%在建%' OR p.duration LIKE '%至今%' THEN 1 ELSE 0 END) as locked_count
+          pm.name,
+          COUNT(CASE WHEN p.filing_status = '备案中' OR p.end_date IS NULL THEN p.id ELSE NULL END) as locked_count
         FROM project_managers pm
         LEFT JOIN projects p ON pm.name = p.manager_name
-        GROUP BY pm.id
+        GROUP BY pm.name
       )
     `).first() as any;
 
