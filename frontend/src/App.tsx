@@ -509,6 +509,22 @@ function App() {
     return '—';
   };
 
+  // 渲染四库平台入库状态的统一徽章
+  const renderRecordStatusBadge = (status: string | null | undefined) => {
+    const val = status ? status.trim() : '';
+    const isOk = val === '已备案' || val === '已入库' || val === '是' || val === '已入网';
+    
+    return (
+      <span className={`badge ${
+        isOk 
+          ? 'bg-success-subtle text-success border border-success-subtle' 
+          : 'bg-secondary-subtle text-secondary border border-secondary-subtle'
+      } fs-95 px-1.5 py-0.5`}>
+        {isOk ? '已入库' : '未入库'}
+      </span>
+    );
+  };
+
   // 职务/岗位简称
   const getRoleAbbr = (role: string) => {
     if (role === '项目经理') return '项';
@@ -771,9 +787,7 @@ function App() {
                             <td className="py-1.5 px-2 text-muted">{formatAmountOrArea(proj.amount)}</td>
                             <td className="py-1.5 px-2 text-muted">{proj.start_date || '—'} 至 {proj.end_date || '在建'}</td>
                             <td className="py-1.5 px-2">
-                              <span className={`badge ${proj.record_status === '是' ? 'bg-success-subtle text-success border-0' : 'bg-secondary-subtle text-secondary border-0'} fs-95 px-1.5 py-0.5`}>
-                                {proj.record_status === '是' ? '已入库' : '未入库'}
-                              </span>
+                              {renderRecordStatusBadge(proj.record_status)}
                             </td>
                             <td className="py-1.5 px-2">
                               {proj.filing_status === '备案中' ? (
@@ -1481,9 +1495,7 @@ function App() {
                                 <td className="py-2 text-secondary">{formatAmountOrArea(gp.area)}</td>
                                 <td className="py-2 text-secondary">{gp.start_date || '—'} 至 {gp.end_date || '在建'}</td>
                                 <td className="py-2">
-                                  <span className={`badge ${gp.record_status === '已备案' || gp.record_status === '已入库' || gp.record_status === '是' ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-secondary-subtle text-secondary border border-secondary-subtle'} fs-9`}>
-                                    {gp.record_status}
-                                  </span>
+                                  {renderRecordStatusBadge(gp.record_status)}
                                 </td>
                                 <td className="py-2">
                                   {gp.staffs.length > 0 ? (
