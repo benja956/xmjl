@@ -492,6 +492,22 @@ function App() {
     setShowProjModal(true);
   };
 
+  // 格式化金额或面积：自动清除“万元”、“平方米”后缀，提取数字并保留两位小数
+  const formatAmountOrArea = (val: string | number | undefined | null): string => {
+    if (val === undefined || val === null) return '—';
+    const str = String(val).trim();
+    if (!str || str === '/' || str === '—' || str === '无') return '—';
+    
+    const match = str.match(/-?\d+(\.\d+)?/);
+    if (match) {
+      const num = parseFloat(match[0]);
+      if (!isNaN(num)) {
+        return num.toFixed(2);
+      }
+    }
+    return str;
+  };
+
   // 职务/岗位简称
   const getRoleAbbr = (role: string) => {
     if (role === '项目经理') return '项';
@@ -724,8 +740,8 @@ function App() {
                         <tr>
                           <th scope="col" className="py-1.5 px-2 text-muted fw-normal">项目名称</th>
                           <th scope="col" className="py-1.5 px-2 text-muted fw-normal" style={{ width: '80px' }}>担任角色</th>
-                          <th scope="col" className="py-1.5 px-2 text-muted fw-normal" style={{ width: '100px' }}>建筑面积</th>
-                          <th scope="col" className="py-1.5 px-2 text-muted fw-normal" style={{ width: '100px' }}>合同金额</th>
+                          <th scope="col" className="py-1.5 px-2 text-muted fw-normal" style={{ width: '110px' }}>建筑面积(㎡)</th>
+                          <th scope="col" className="py-1.5 px-2 text-muted fw-normal" style={{ width: '110px' }}>合同金额(万元)</th>
                           <th scope="col" className="py-1.5 px-2 text-muted fw-normal" style={{ width: '180px' }}>开竣工时间</th>
                           <th scope="col" className="py-1.5 px-2 text-muted fw-normal" style={{ width: '90px' }}>四库平台</th>
                           <th scope="col" className="py-1.5 px-2 text-muted fw-normal" style={{ width: '220px' }}>人员锁证备案</th>
@@ -750,8 +766,8 @@ function App() {
                                 {proj.role === '技术负责人' ? '技' : '项'}
                               </span>
                             </td>
-                            <td className="py-1.5 px-2 text-muted">{proj.area || '—'}</td>
-                            <td className="py-1.5 px-2 text-muted">{proj.amount || '—'}</td>
+                            <td className="py-1.5 px-2 text-muted">{formatAmountOrArea(proj.area)}</td>
+                            <td className="py-1.5 px-2 text-muted">{formatAmountOrArea(proj.amount)}</td>
                             <td className="py-1.5 px-2 text-muted">{proj.start_date || '—'} 至 {proj.end_date || '在建'}</td>
                             <td className="py-1.5 px-2">
                               <span className={`badge ${proj.record_status === '是' ? 'bg-success-subtle text-success border-0' : 'bg-secondary-subtle text-secondary border-0'} fs-95 px-1.5 py-0.5`}>
@@ -1429,8 +1445,8 @@ function App() {
                       <thead className="table-light sticky-top" style={{ zIndex: 10, top: 0 }}>
                         <tr>
                           <th scope="col" className="py-2.5" style={{ width: '280px' }}>项目名称</th>
-                          <th scope="col" className="py-2.5" style={{ width: '110px' }}>合同金额</th>
-                          <th scope="col" className="py-2.5" style={{ width: '110px' }}>建筑面积</th>
+                          <th scope="col" className="py-2.5" style={{ width: '120px' }}>合同金额(万元)</th>
+                          <th scope="col" className="py-2.5" style={{ width: '120px' }}>建筑面积(㎡)</th>
                           <th scope="col" className="py-2.5" style={{ width: '180px' }}>开竣工时间</th>
                           <th scope="col" className="py-2.5" style={{ width: '90px' }}>四库平台</th>
                           <th scope="col" className="py-2.5 text-center" style={{ width: '95px' }}>参建人员</th>
@@ -1460,8 +1476,8 @@ function App() {
                                     </button>
                                   )}
                                 </td>
-                                <td className="py-2 text-secondary">{gp.amount}</td>
-                                <td className="py-2 text-secondary">{gp.area}</td>
+                                <td className="py-2 text-secondary">{formatAmountOrArea(gp.amount)}</td>
+                                <td className="py-2 text-secondary">{formatAmountOrArea(gp.area)}</td>
                                 <td className="py-2 text-secondary">{gp.start_date || '—'} 至 {gp.end_date || '在建'}</td>
                                 <td className="py-2">
                                   <span className={`badge ${gp.record_status === '已备案' || gp.record_status === '已入库' || gp.record_status === '是' ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-secondary-subtle text-secondary border border-secondary-subtle'} fs-9`}>
