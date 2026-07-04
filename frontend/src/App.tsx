@@ -728,6 +728,7 @@ function App() {
                           <th scope="col" className="py-1.5 px-2 text-muted fw-normal" style={{ width: '100px' }}>合同金额</th>
                           <th scope="col" className="py-1.5 px-2 text-muted fw-normal" style={{ width: '180px' }}>开竣工时间</th>
                           <th scope="col" className="py-1.5 px-2 text-muted fw-normal" style={{ width: '90px' }}>四库平台</th>
+                          <th scope="col" className="py-1.5 px-2 text-muted fw-normal" style={{ width: '220px' }}>人员锁证备案</th>
                           <th scope="col" className="py-1.5 px-2 text-center text-muted fw-normal" style={{ width: '60px' }}>操作</th>
                         </tr>
                       </thead>
@@ -756,6 +757,25 @@ function App() {
                               <span className={`badge ${proj.record_status === '是' ? 'bg-success-subtle text-success border-0' : 'bg-secondary-subtle text-secondary border-0'} fs-95 px-1.5 py-0.5`}>
                                 {proj.record_status === '是' ? '已入库' : '未入库'}
                               </span>
+                            </td>
+                            <td className="py-1.5 px-2">
+                              {proj.filing_status === '备案中' ? (
+                                <div className="d-flex flex-column lh-sm">
+                                  <div>
+                                    <span className="badge bg-danger-subtle text-danger border border-danger-subtle fs-9 px-1 me-1">锁证 🔴</span>
+                                    <span className="fw-semibold text-dark fs-9">{proj.filing_post || '备案中'}</span>
+                                  </div>
+                                  {(proj.filing_start || proj.filing_end) && (
+                                    <span className="text-muted" style={{ fontSize: '0.75rem' }}>
+                                      {proj.filing_start || '—'} 至 {proj.filing_end || '长期'}
+                                    </span>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-success" style={{ fontSize: '0.75rem' }}>
+                                  <i className="bi bi-check-circle-fill me-1"></i>空闲可投标
+                                </span>
+                              )}
                             </td>
                             <td className="py-1.5 px-2 text-center">
                               <button 
@@ -1351,6 +1371,10 @@ function App() {
                 safety_cert: string;
                 manager_status: string;
                 raw_project: any;
+                filing_status: string;
+                filing_post: string;
+                filing_start: string;
+                filing_end: string;
               }[];
             } } = {};
 
@@ -1377,6 +1401,10 @@ function App() {
                 safety_cert: mDetail ? mDetail.safety_cert : '',
                 manager_status: p.manager_status,
                 raw_project: p,
+                filing_status: p.filing_status || '',
+                filing_post: p.filing_post || '',
+                filing_start: p.filing_start || '',
+                filing_end: p.filing_end || '',
               });
             });
 
@@ -1463,12 +1491,22 @@ function App() {
                                   )}
                                 </td>
                                 <td className="py-2 small text-muted text-truncate" style={{ maxWidth: '250px' }}>
-                                  {gp.filing_status ? (
-                                    <span className="badge bg-info-subtle text-info border border-info-subtle fs-9 me-1.5">
-                                      {gp.filing_status}
-                                    </span>
-                                  ) : null}
-                                  {gp.filing_end ? `预计到 ${gp.filing_end}` : '—'}
+                                  {gp.staffs.filter((st) => st.filing_status === '备案中').length > 0 ? (
+                                    gp.staffs
+                                      .filter((st) => st.filing_status === '备案中')
+                                      .map((st) => (
+                                        <div key={st.id} className="lh-sm mb-1">
+                                          <span className="badge bg-danger-subtle text-danger border border-danger-subtle fs-9 me-1">
+                                            {st.manager_name} 锁
+                                          </span>
+                                          <span className="text-secondary" style={{ fontSize: '0.75rem' }}>
+                                            {st.filing_end ? `到 ${st.filing_end}` : '在建中'}
+                                          </span>
+                                        </div>
+                                      ))
+                                  ) : (
+                                    <span className="text-muted">—</span>
+                                  )}
                                 </td>
                               </tr>
 
@@ -1484,6 +1522,7 @@ function App() {
                                             <th scope="col" className="py-1.5 px-2 text-muted fw-normal" style={{ width: '80px' }}>担任角色</th>
                                             <th scope="col" className="py-1.5 px-2 text-muted fw-normal" style={{ width: '100px' }}>注册专业</th>
                                             <th scope="col" className="py-1.5 px-2 text-muted fw-normal" style={{ width: '80px' }}>安考证书</th>
+                                            <th scope="col" className="py-1.5 px-2 text-muted fw-normal" style={{ width: '220px' }}>人员锁证备案</th>
                                             <th scope="col" className="py-1.5 px-2 text-center text-muted fw-normal" style={{ width: '60px' }}>操作</th>
                                           </tr>
                                         </thead>
@@ -1542,6 +1581,25 @@ function App() {
                                                       {stSafety}
                                                     </span>
                                                   ) : '—'}
+                                                </td>
+                                                <td className="py-1.5 px-2">
+                                                  {st.filing_status === '备案中' ? (
+                                                    <div className="d-flex flex-column lh-sm">
+                                                      <div>
+                                                        <span className="badge bg-danger-subtle text-danger border border-danger-subtle fs-9 px-1 me-1">锁证 🔴</span>
+                                                        <span className="fw-semibold text-dark fs-9">{st.filing_post || '备案中'}</span>
+                                                      </div>
+                                                      {(st.filing_start || st.filing_end) && (
+                                                        <span className="text-muted" style={{ fontSize: '0.75rem' }}>
+                                                          {st.filing_start || '—'} 至 {st.filing_end || '长期'}
+                                                        </span>
+                                                      )}
+                                                    </div>
+                                                  ) : (
+                                                    <span className="text-success" style={{ fontSize: '0.75rem' }}>
+                                                      <i className="bi bi-check-circle-fill me-1"></i>空闲可投标
+                                                    </span>
+                                                  )}
                                                 </td>
                                                 <td className="py-1.5 px-2 text-center">
                                                   <button 
