@@ -505,7 +505,8 @@ function App() {
         return num.toFixed(2);
       }
     }
-    return str;
+    // 若匹配不到有效数字（如“/平方米”或纯文字），统一清洗为“—”
+    return '—';
   };
 
   // 职务/岗位简称
