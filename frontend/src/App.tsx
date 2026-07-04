@@ -2,10 +2,10 @@ import { useState, useEffect, Fragment } from 'react';
 import './App.css';
 
 interface Manager {
-  id: number;
   name: string;
   title: string;
   title_major: string;
+  title_date?: string | null;
   cert_name: string;
   cert_major: string;
   safety_cert: string;
@@ -22,7 +22,8 @@ interface Project {
   role: string;
   area: string;
   amount: string;
-  duration: string;
+  start_date: string | null;
+  end_date: string | null;
   record_status: string;
   filing_status: string;
   filing_post: string;
@@ -78,9 +79,9 @@ function App() {
 
   // 视图切换: 'manager' (项目经理视图) | 'project' (project 视图)
   const [activeTab, setActiveTab] = useState<'manager' | 'project'>('manager');
-  const [activeMenuManagerId, setActiveMenuManagerId] = useState<number | null>(null);
+  const [activeMenuManagerName, setActiveMenuManagerName] = useState<string | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [expandedManagerIds, setExpandedManagerIds] = useState<number[]>([]);
+  const [expandedManagerIds, setExpandedManagerIds] = useState<string[]>([]);
   const [expandedProjectNames, setExpandedProjectNames] = useState<string[]>([]);
 
   // 数据列表状态
@@ -132,10 +133,12 @@ function App() {
   // ==========================================
   const [showMgrModal, setShowMgrModal] = useState(false);
   const [editingManager, setEditingManager] = useState<Manager | null>(null); // null 代表新增
+  const [editingManagerName, setEditingManagerName] = useState<string | null>(null); // 保存修改前的原始姓名
   const [mgrForm, setMgrForm] = useState({
     name: '',
     title: '',
     title_major: '',
+    title_date: '',
     cert_name: '一级建造师',
     cert_major: '',
     safety_cert: '无',
@@ -150,7 +153,8 @@ function App() {
     role: '项目经理',
     area: '',
     amount: '',
-    duration: '',
+    start_date: '',
+    end_date: '',
     record_status: '已备案',
     filing_status: '已备案',
     filing_post: '',
@@ -209,7 +213,7 @@ function App() {
 
   // 点击页面空白处自动收起人名操作菜单
   useEffect(() => {
-    const handleCloseMenu = () => setActiveMenuManagerId(null);
+    const handleCloseMenu = () => setActiveMenuManagerName(null);
     document.addEventListener('click', handleCloseMenu);
     return () => document.removeEventListener('click', handleCloseMenu);
   }, []);
@@ -286,7 +290,7 @@ function App() {
     try {
       const isEdit = !!editingManager;
       const url = isEdit
-        ? `${API_BASE}/api/managers/${editingManager.id}`
+        ? `${API_BASE}/api/managers/${editingManagerName}`
         : `${API_BASE}/api/managers`;
       const method = isEdit ? 'PUT' : 'POST';
 
@@ -305,10 +309,10 @@ function App() {
     }
   };
 
-  const handleDeleteManager = async (id: number, name: string) => {
-    if (!confirm(`确定要删除项目经理 "${name}" 吗？此操作将同步级联删除他名下的所有项目业绩！`)) return;
+  const handleDeleteManager = async (name: string) => {
+    if (!confirm(`确定要删除项目经理 "${name}" 吗？此操作将同步级联删除他名下的所有项目业绩与专业！`)) return;
     try {
-      const res = await fetchWithAuth(`${API_BASE}/api/managers/${id}`, { method: 'DELETE' });
+      const res = await fetchWithAuth(`${API_BASE}/api/managers/${name}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('删除人员失败');
       await fetchAllData();
     } catch (err: any) {
@@ -352,9 +356,9 @@ function App() {
     );
   };
 
-  const toggleExpandManager = (id: number) => {
+  const toggleExpandManager = (name: string) => {
     setExpandedManagerIds((prev) =>
-      prev.includes(id) ? prev.filter((mid) => mid !== id) : [...prev, id]
+      prev.includes(name) ? prev.filter((mName) => mName !== name) : [...prev, name]
     );
   };
 
@@ -374,10 +378,12 @@ function App() {
   // ==========================================
   const openAddManager = () => {
     setEditingManager(null);
+    setEditingManagerName(null);
     setMgrForm({
       name: '',
       title: '',
       title_major: '',
+      title_date: '',
       cert_name: '一级建造师',
       cert_major: '',
       safety_cert: '无',
@@ -388,10 +394,12 @@ function App() {
 
   const openEditManager = (mgr: Manager) => {
     setEditingManager(mgr);
+    setEditingManagerName(mgr.name);
     setMgrForm({
       name: mgr.name,
       title: mgr.title,
       title_major: mgr.title_major,
+      title_date: mgr.title_date || '',
       cert_name: mgr.cert_name,
       cert_major: mgr.cert_major,
       safety_cert: mgr.safety_cert,
@@ -408,7 +416,8 @@ function App() {
       role: '项目经理',
       area: '',
       amount: '',
-      duration: '',
+      start_date: '',
+      end_date: '',
       record_status: '已备案',
       filing_status: '已备案',
       filing_post: '',
@@ -425,7 +434,8 @@ function App() {
       role: proj.role,
       area: proj.area,
       amount: proj.amount,
-      duration: proj.duration,
+      start_date: proj.start_date || '',
+      end_date: proj.end_date || '',
       record_status: proj.record_status,
       filing_status: proj.filing_status,
       filing_post: proj.filing_post,
@@ -517,7 +527,7 @@ function App() {
       const myProjects = projects.filter((p) => p.manager_name === mgr.name);
       
       return (
-        <Fragment key={mgr.id}>
+        <Fragment key={mgr.name}>
           {/* 人员基本信息行 */}
           <tr>
             <td className="py-2 position-relative">
@@ -537,7 +547,7 @@ function App() {
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
-                  setActiveMenuManagerId(activeMenuManagerId === mgr.id ? null : mgr.id);
+                  setActiveMenuManagerName(activeMenuManagerName === mgr.name ? null : mgr.name);
                 }}
                 title="点击展示操作菜单"
               >
@@ -545,7 +555,7 @@ function App() {
                 <i className="bi bi-caret-down-fill" style={{ fontSize: '0.65rem' }}></i>
               </span>
 
-              {activeMenuManagerId === mgr.id && (
+              {activeMenuManagerName === mgr.name && (
                 <div 
                   className="dropdown-menu show shadow-lg border position-absolute" 
                   style={{ zIndex: 1050, left: '12px', top: '38px', minWidth: '160px' }}
@@ -556,7 +566,7 @@ function App() {
                     className="dropdown-item py-2 d-flex align-items-center" 
                     onClick={() => {
                       openAddProject(mgr.name);
-                      setActiveMenuManagerId(null);
+                      setActiveMenuManagerName(null);
                     }}
                   >
                     <i className="bi bi-plus-circle text-primary me-2"></i>
@@ -567,7 +577,7 @@ function App() {
                     className="dropdown-item py-2 d-flex align-items-center" 
                     onClick={() => {
                       openEditManager(mgr);
-                      setActiveMenuManagerId(null);
+                      setActiveMenuManagerName(null);
                     }}
                   >
                     <i className="bi bi-pencil-square text-secondary me-2"></i>
@@ -578,8 +588,8 @@ function App() {
                     type="button" 
                     className="dropdown-item py-2 d-flex align-items-center text-danger" 
                     onClick={() => {
-                      handleDeleteManager(mgr.id, mgr.name);
-                      setActiveMenuManagerId(null);
+                      handleDeleteManager(mgr.name);
+                      setActiveMenuManagerName(null);
                     }}
                   >
                     <i className="bi bi-trash3-fill me-2"></i>
@@ -635,16 +645,16 @@ function App() {
                 <button
                   type="button"
                   className={`btn btn-xs rounded-pill py-0.5 px-2 d-inline-flex align-items-center gap-1 font-weight-bold ${
-                    expandedManagerIds.includes(mgr.id) 
+                    expandedManagerIds.includes(mgr.name) 
                       ? 'btn-primary text-white shadow-xs' 
                       : 'btn-outline-primary'
                   }`}
                   style={{ fontSize: '0.75rem' }}
-                  onClick={() => toggleExpandManager(mgr.id)}
-                  title={expandedManagerIds.includes(mgr.id) ? '点击折叠业绩' : '点击展开业绩'}
+                  onClick={() => toggleExpandManager(mgr.name)}
+                  title={expandedManagerIds.includes(mgr.name) ? '点击折叠业绩' : '点击展开业绩'}
                 >
                   <span>{myProjects.length} 项</span>
-                  <i className={`bi ${expandedManagerIds.includes(mgr.id) ? 'bi-chevron-up' : 'bi-chevron-down'}`}></i>
+                  <i className={`bi ${expandedManagerIds.includes(mgr.name) ? 'bi-chevron-up' : 'bi-chevron-down'}`}></i>
                 </button>
               ) : (
                 <span className="badge bg-light text-muted border fs-8 px-2 py-0.5">
@@ -658,7 +668,7 @@ function App() {
           </tr>
 
           {/* 关联项目条件性折叠展开挂在下面 */}
-          {myProjects.length > 0 && expandedManagerIds.includes(mgr.id) && (
+          {myProjects.length > 0 && expandedManagerIds.includes(mgr.name) && (
             <tr className="bg-light-subtle">
               <td colSpan={7} className="p-1.5 px-4 pb-2 bg-light-subtle">
                 <div className="table-responsive border-0 bg-transparent">
@@ -694,7 +704,7 @@ function App() {
                             </td>
                             <td className="py-1.5 px-2 text-muted">{proj.area || '—'}</td>
                             <td className="py-1.5 px-2 text-muted">{proj.amount || '—'}</td>
-                            <td className="py-1.5 px-2 text-muted">{proj.duration || '—'}</td>
+                            <td className="py-1.5 px-2 text-muted">{proj.start_date || '—'} 至 {proj.end_date || '在建'}</td>
                             <td className="py-1.5 px-2">
                               <span className={`badge ${proj.record_status === '是' ? 'bg-success-subtle text-success border-0' : 'bg-secondary-subtle text-secondary border-0'} fs-95 px-1.5 py-0.5`}>
                                 {proj.record_status === '是' ? '已入库' : '未入库'}
@@ -735,15 +745,13 @@ function App() {
     return match ? parseFloat(match[0]) : 0;
   };
 
-  const checkProjectCompletedYear = (durationStr: string, limitYears: number): boolean => {
-    if (!durationStr) return false;
-    const years = durationStr.match(/\b(20\d{2})\b/g);
-    if (years && years.length > 0) {
-      const lastYear = parseInt(years[years.length - 1]);
-      const currentYear = new Date().getFullYear();
-      return currentYear - lastYear <= limitYears;
-    }
-    return false;
+  const checkProjectCompletedYear = (endDateStr: string | null, limitYears: number): boolean => {
+    if (!endDateStr) return false;
+    const date = new Date(endDateStr);
+    if (isNaN(date.getTime())) return false;
+    const lastYear = date.getFullYear();
+    const currentYear = new Date().getFullYear();
+    return currentYear - lastYear <= limitYears;
   };
 
   // ==========================================
@@ -780,7 +788,7 @@ function App() {
     if (mgrCompletedIn !== 'all') {
       const limitYears = parseInt(mgrCompletedIn);
       const hasRecentProject = myProjects.some((p) =>
-        checkProjectCompletedYear(p.duration, limitYears)
+        checkProjectCompletedYear(p.end_date, limitYears)
       );
       if (!hasRecentProject) return false;
     }
@@ -817,7 +825,7 @@ function App() {
       if (parseNum(proj.area) < limit) return false;
     }
     if (projTimeStatus !== 'all') {
-      const isOngoing = proj.duration.includes('在建') || proj.duration.includes('至今');
+      const isOngoing = !proj.end_date;
       if (projTimeStatus === '在建' && !isOngoing) return false;
       if (projTimeStatus === '已竣工' && isOngoing) return false;
     }
@@ -1269,13 +1277,13 @@ function App() {
               project_name: string;
               amount: string;
               area: string;
-              duration: string;
+              start_date: string;
+              end_date: string;
               record_status: string;
               filing_status: string;
               filing_end: string;
               staffs: {
                 id: number;
-                manager_id: number;
                 manager_name: string;
                 role: string;
                 safety_cert: string;
@@ -1291,7 +1299,8 @@ function App() {
                   project_name: p.project_name,
                   amount: p.amount || '—',
                   area: p.area || '—',
-                  duration: p.duration || '—',
+                  start_date: p.start_date || '—',
+                  end_date: p.end_date || '—',
                   record_status: p.record_status || '无',
                   filing_status: p.filing_status || '',
                   filing_end: p.filing_end || '',
@@ -1301,7 +1310,6 @@ function App() {
               const mDetail = managers.find((m) => m.name === p.manager_name);
               groupedMap[key].staffs.push({
                 id: p.id,
-                manager_id: mDetail ? mDetail.id : 0,
                 manager_name: p.manager_name,
                 role: p.role,
                 safety_cert: mDetail ? mDetail.safety_cert : '',
@@ -1364,7 +1372,7 @@ function App() {
                                 </td>
                                 <td className="py-2 text-secondary">{gp.amount}</td>
                                 <td className="py-2 text-secondary">{gp.area}</td>
-                                <td className="py-2 text-secondary">{gp.duration}</td>
+                                <td className="py-2 text-secondary">{gp.start_date || '—'} 至 {gp.end_date || '在建'}</td>
                                 <td className="py-2">
                                   <span className={`badge ${gp.record_status === '已备案' || gp.record_status === '已入库' || gp.record_status === '是' ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-secondary-subtle text-secondary border border-secondary-subtle'} fs-9`}>
                                     {gp.record_status}
@@ -1613,7 +1621,7 @@ function App() {
                     />
                   </div>
                   <div className="row mb-3">
-                    <div className="col-6">
+                    <div className="col-4">
                       <label className="form-label">职称</label>
                       <input
                         type="text"
@@ -1623,13 +1631,23 @@ function App() {
                         onChange={(e) => setMgrForm({ ...mgrForm, title: e.target.value })}
                       />
                     </div>
-                    <div className="col-6">
+                    <div className="col-4">
                       <label className="form-label">职称专业</label>
                       <input
                         type="text"
                         className="form-control"
+                        placeholder="如: 建筑工程"
                         value={mgrForm.title_major}
                         onChange={(e) => setMgrForm({ ...mgrForm, title_major: e.target.value })}
+                      />
+                    </div>
+                    <div className="col-4">
+                      <label className="form-label">发证日期</label>
+                      <input
+                        type="date"
+                        className="form-control"
+                        value={mgrForm.title_date}
+                        onChange={(e) => setMgrForm({ ...mgrForm, title_date: e.target.value })}
                       />
                     </div>
                   </div>
@@ -1747,17 +1765,48 @@ function App() {
                     </div>
                   </div>
                   <div className="row mb-3">
-                    <div className="col-6">
-                      <label className="form-label">开竣工时间</label>
+                    <div className="col-4">
+                      <label className="form-label">开工日期</label>
                       <input
-                        type="text"
+                        type="date"
                         className="form-control"
-                        placeholder="如: 2020.11.25—2022.11.10 或 在建"
-                        value={projForm.duration}
-                        onChange={(e) => setProjForm({ ...projForm, duration: e.target.value })}
+                        value={projForm.start_date}
+                        onChange={(e) => setProjForm({ ...projForm, start_date: e.target.value })}
                       />
                     </div>
-                    <div className="col-6">
+                    <div className="col-4">
+                      <label className="form-label">竣工日期</label>
+                      <input
+                        type="date"
+                        className="form-control"
+                        value={projForm.end_date}
+                        disabled={!projForm.end_date}
+                        onChange={(e) => setProjForm({ ...projForm, end_date: e.target.value })}
+                      />
+                    </div>
+                    <div className="col-4 d-flex align-items-end pb-2">
+                      <div className="form-check">
+                        <input
+                          type="checkbox"
+                          className="form-check-input"
+                          id="isOngoingCheckbox"
+                          checked={!projForm.end_date}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setProjForm({ ...projForm, end_date: '' });
+                            } else {
+                              setProjForm({ ...projForm, end_date: new Date().toISOString().split('T')[0] });
+                            }
+                          }}
+                        />
+                        <label className="form-check-label font-weight-bold text-primary small" htmlFor="isOngoingCheckbox">
+                          🏗️ 仍在建 (竣工无期限)
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="row mb-3">
+                    <div className="col-12">
                       <label className="form-label">四库平台备案情况</label>
                       <input
                         type="text"
