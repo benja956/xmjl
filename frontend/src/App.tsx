@@ -1581,20 +1581,9 @@ function App() {
           dictionaries={dictionaries}
           onSave={handleSaveDictionary}
           onDelete={handleDeleteDictionary}
+          onOpenAuditLogs={openLogsModal}
         />
       )}
-
-      {/* 底部系统操作审计日志按钮 */}
-      <footer className="text-center text-muted small py-4 border-top mt-5 d-flex flex-column align-items-center justify-content-center gap-2">
-        <button className="btn btn-sm btn-outline-secondary d-flex align-items-center" onClick={openLogsModal}>
-          <i className="bi bi-shield-shaded me-1.5 text-info"></i>
-          查看系统安全操作审计日志 (最近50条修改)
-        </button>
-        <p className="mb-0 mt-2">一建注册业绩大屏 &copy; 2026 Antigravity Pair Programming Project</p>
-        <p className="mb-0 text-muted opacity-50" style={{ fontSize: '0.7rem' }}>
-          Security Mode: JWT Authentication | API Target: {API_BASE}
-        </p>
-      </footer>
 
       {/* ==========================================
           MODAL 0: 查看审计日志
@@ -2025,9 +2014,10 @@ interface DictionaryManagerPanelProps {
   dictionaries: DictionaryItem[];
   onSave: (type: string, value: string, editId: number | null) => Promise<void>;
   onDelete: (id: number) => Promise<void>;
+  onOpenAuditLogs: () => void;
 }
 
-function DictionaryManagerPanel({ dictionaries, onSave, onDelete }: DictionaryManagerPanelProps) {
+function DictionaryManagerPanel({ dictionaries, onSave, onDelete, onOpenAuditLogs }: DictionaryManagerPanelProps) {
   const [selectedType, setSelectedType] = useState<string>('cert_major');
   const [newValue, setNewValue] = useState('');
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -2095,6 +2085,16 @@ function DictionaryManagerPanel({ dictionaries, onSave, onDelete }: DictionaryMa
                 </span>
               </button>
             ))}
+          </div>
+          <div className="border-top my-2 pt-2 px-1">
+            <button
+              type="button"
+              className="btn btn-xs btn-outline-secondary w-100 d-flex align-items-center justify-content-center gap-1.5 py-2 rounded-3 fs-8 mb-1 transition-all"
+              onClick={onOpenAuditLogs}
+            >
+              <i className="bi bi-shield-shaded text-info"></i>
+              <span>查看系统变更审计日志</span>
+            </button>
           </div>
         </div>
       </div>
