@@ -970,10 +970,6 @@ function App() {
               <i className="bi bi-lock-fill text-danger me-1"></i>
               锁定中: <strong className="text-danger">{stats.locked_managers}</strong>人
             </span>
-            <span className="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-1 fs-85 shadow-3xs">
-              <i className="bi bi-currency-yen text-warning-emphasis me-1"></i>
-              总业绩: <strong className="text-warning-emphasis">{(stats.total_amount_万元 / 10000).toFixed(1)}</strong>亿元
-            </span>
           </div>
         </div>
         <div className="d-flex align-items-center gap-2 flex-wrap">
